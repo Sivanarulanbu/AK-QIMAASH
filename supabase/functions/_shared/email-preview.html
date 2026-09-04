@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AK QIMAASH — Email Template Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0E0E0E;
+      color: #FAFAFA;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .preview-header {
+      padding: 40px 32px 24px;
+      text-align: center;
+      border-bottom: 1px solid #2E2E2E;
+      background: linear-gradient(180deg, #1C1C1C 0%, #0E0E0E 100%);
+    }
+    .preview-header h1 {
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .preview-header .accent-line {
+      width: 48px;
+      height: 2px;
+      background: #B05C3A;
+      margin: 0 auto 12px;
+      border-radius: 1px;
+    }
+    .preview-header p {
+      font-size: 13px;
+      color: #757575;
+      letter-spacing: 0.04em;
+    }
+
+    /* Tabs */
+    .tabs-container {
+      padding: 24px 32px;
+      overflow-x: auto;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #2E2E2E;
+      background: #1C1C1C;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 10px 20px;
+      border: 1px solid #2E2E2E;
+      border-radius: 8px;
+      background: transparent;
+      color: #A8A8A8;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      border-color: #4A4A4A;
+      color: #FAFAFA;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #B05C3A 0%, #8B4427 100%);
+      border-color: #B05C3A;
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    /* Preview Area */
+    .preview-area {
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .preview-info {
+      max-width: 640px;
+      width: 100%;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preview-subject {
+      font-size: 14px;
+      color: #757575;
+    }
+    .preview-subject strong {
+      color: #FAFAFA;
+    }
+    .device-toggle {
+      display: flex;
+      gap: 6px;
+    }
+    .device-btn {
+      padding: 6px 14px;
+      border: 1px solid #2E2E2E;
+      border-radius: 6px;
+      background: transparent;
+      color: #757575;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .device-btn:hover { border-color: #4A4A4A; color: #FAFAFA; }
+    .device-btn.active { background: #2E2E2E; color: #FAFAFA; border-color: #4A4A4A; }
+
+    /* Email Frame */
+    .email-frame-wrapper {
+      background: #1C1C1C;
+      border: 1px solid #2E2E2E;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: width 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    .email-frame-wrapper.desktop { width: 640px; }
+    .email-frame-wrapper.mobile { width: 375px; }
+    .email-frame-bar {
+      height: 36px;
+      background: #2E2E2E;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 6px;
+    }
+    .email-frame-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .email-frame-dot.red { background: #FF5F57; }
+    .email-frame-dot.yellow { background: #FEBC2E; }
+    .email-frame-dot.green { background: #28C840; }
+    .email-frame-content {
+      background: #F5F4F0;
+      min-height: 400px;
+    }
+    .email-frame-content iframe {
+      width: 100%;
+      border: none;
+      display: block;
+      min-height: 800px;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-header">
+    <h1>AK QIMAASH</h1>
+    <div class="accent-line"></div>
+    <p>Email Template Preview — All Transactional Emails</p>
+  </div>
+
+  <div class="tabs-container" id="tabs">
+    <button class="tab-btn active" data-template="order-placed">Order Placed</button>
+    <button class="tab-btn" data-template="order-confirmed">Confirmed</button>
+    <button class="tab-btn" data-template="order-processing">Processing</button>
+    <button class="tab-btn" data-template="order-shipped">Shipped</button>
+    <button class="tab-btn" data-template="out-for-delivery">Out for Delivery</button>
+    <button class="tab-btn" data-template="order-delivered">Delivered</button>
+    <button class="tab-btn" data-template="order-cancelled">Cancelled</button>
+    <button class="tab-btn" data-template="welcome">Welcome</button>
+    <button class="tab-btn" data-template="password-reset">Password Reset</button>
+    <button class="tab-btn" data-template="review-request">Review Request</button>
+  </div>
+
+  <div class="preview-area">
+    <div class="preview-info">
+      <div class="preview-subject">
+        Subject: <strong id="subject-line">Loading...</strong>
+      </div>
+      <div class="device-toggle">
+        <button class="device-btn active" data-device="desktop">🖥 Desktop</button>
+        <button class="device-btn" data-device="mobile">📱 Mobile</button>
+      </div>
+    </div>
+    <div class="email-frame-wrapper desktop" id="email-frame">
+      <div class="email-frame-bar">
+        <div class="email-frame-dot red"></div>
+        <div class="email-frame-dot yellow"></div>
+        <div class="email-frame-dot green"></div>
+      </div>
+      <div class="email-frame-content">
+        <iframe id="email-iframe" title="Email Preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── Sample Data ──────────────────────────────────────────
+    const BRAND = {
+      name: 'AK QIMAASH',
+      tagline: 'Modest Luxury, Redefined',
+      website: 'https://akqimaash.sg',
+      supportEmail: 'support@akqimaash.sg',
+      instagram: 'https://instagram.com/akqimaash',
+      colors: {
+        black: '#0E0E0E', charcoal: '#1C1C1C', graphite: '#2E2E2E',
+        stone: '#4A4A4A', slate: '#757575', silver: '#A8A8A8',
+        mist: '#D4D4D4', smoke: '#EBEBEB', ivory: '#F5F4F0',
+        white: '#FAFAFA', accent: '#B05C3A', accentLight: '#C97A55',
+        accentDark: '#8B4427', accentMuted: '#E8C4B0', accentSubtle: '#F5EAE3',
+        success: '#2D6A4F', successLight: '#D8F3DC',
+        warning: '#B5700A', warningLight: '#FEF3C7',
+        error: '#9B2335', errorLight: '#FEE2E2',
+      },
+    }
+
+    const sampleOrder = {
+      order_number: 'AKQ-2026-00142',
+      order_id: 'abc123',
+      customer_name: 'Aisha Rahman',
+      items: [
+        { product_name: 'Silk Abaya — Midnight Garden', variant_size: 'M', variant_color: 'Deep Black', quantity: 1, unit_price_cents: 18900, total_price_cents: 18900 },
+        { product_name: 'Hijab Scarf — Cloud White', variant_size: null, variant_color: 'Pearl White', quantity: 2, unit_price_cents: 4500, total_price_cents: 9000 },
+        { product_name: 'Embroidered Kaftan — Desert Rose', variant_size: 'L', variant_color: 'Dusty Rose', quantity: 1, unit_price_cents: 24500, total_price_cents: 24500 },
+      ],
+      totals: { subtotal_cents: 52400, gst_cents: 4716, delivery_cents: 0, total_cents: 57116 },
+      address: { recipient_name: 'Aisha Rahman', phone: '+65 9123 4567', block_building: 'Blk 123', street: 'Jalan Sultan', unit_number: '#04-56', postal_code: '199011' },
+      payment_method: 'COD',
+      tracking_number: 'SG2026TRACK8842',
+      courier_name: 'Ninja Van',
+      estimated_delivery: '2026-09-08',
+      created_at: '2026-09-04T04:21:37.000Z',
+    }
+
+    // ─── Template builder helpers ────────────────────────────
+    function formatCurrency(cents) { return `S$${(cents / 100).toFixed(2)}` }
+    function formatDate(d) { return new Date(d).toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' }) }
+    function statusName(s) { return { PLACED:'Order Placed', CONFIRMED:'Confirmed', PROCESSING:'Processing', SHIPPED:'Shipped', OUT_FOR_DELIVERY:'Out for Delivery', DELIVERED:'Delivered', CANCELLED:'Cancelled' }[s]||s }
+
+    function statusBadge(status) {
+      const map = {
+        PLACED: [BRAND.colors.accentSubtle, BRAND.colors.accent],
+        CONFIRMED: [BRAND.colors.accentSubtle, BRAND.colors.accent],
+        PROCESSING: [BRAND.colors.warningLight, BRAND.colors.warning],
+        SHIPPED: ['#DBEAFE','#1E3A5F'],
+        OUT_FOR_DELIVERY: ['#DBEAFE','#1E3A5F'],
+        DELIVERED: [BRAND.colors.successLight, BRAND.colors.success],
+        CANCELLED: [BRAND.colors.errorLight, BRAND.colors.error],
+      }
+      const [bg, fg] = map[status] || [BRAND.colors.accentSubtle, BRAND.colors.accent]
+      return `<span style="display:inline-block;padding:4px 14px;border-radius:100px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;background:${bg};color:${fg};">${statusName(status)}</span>`
+    }
+
+    function baseLayout(content, preheader='') {
+      return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}body{margin:0;padding:0;background:${BRAND.colors.ivory};font-family:'Inter',-apple-system,sans-serif}@media only screen and (max-width:620px){.email-container{width:100%!important;padding:0 16px!important}.stack-column{display:block!important;width:100%!important}.mobile-padding{padding:24px 20px!important}}</style></head><body style="margin:0;padding:0;background:${BRAND.colors.ivory};font-family:'Inter',-apple-system,sans-serif;"><div style="display:none;font-size:1px;color:${BRAND.colors.ivory};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:${BRAND.colors.ivory};"><tr><td align="center" style="padding:24px 16px 0;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container"><tr><td style="padding:32px 40px 24px;text-align:center;background:linear-gradient(135deg,${BRAND.colors.charcoal} 0%,${BRAND.colors.black} 100%);border-radius:12px 12px 0 0;" class="mobile-padding"><h1 style="margin:0;font-size:28px;font-weight:300;letter-spacing:0.18em;color:${BRAND.colors.white};text-transform:uppercase;">${BRAND.name}</h1><div style="width:48px;height:2px;background:${BRAND.colors.accent};margin:16px auto 8px;border-radius:1px;"></div><p style="margin:0;font-size:11px;letter-spacing:0.12em;color:${BRAND.colors.slate};text-transform:uppercase;">${BRAND.tagline}</p></td></tr><tr><td style="padding:40px 40px 32px;background:#FFFFFF;border-left:1px solid ${BRAND.colors.smoke};border-right:1px solid ${BRAND.colors.smoke};" class="mobile-padding">${content}</td></tr><tr><td style="padding:32px 40px;background:${BRAND.colors.charcoal};border-radius:0 0 12px 12px;text-align:center;" class="mobile-padding"><table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 20px;"><tr><td style="padding:0 8px;"><a href="${BRAND.website}" style="display:inline-block;padding:8px 16px;border:1px solid ${BRAND.colors.stone};border-radius:6px;color:${BRAND.colors.mist};font-size:11px;text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;">Shop</a></td><td style="padding:0 8px;"><a href="${BRAND.instagram}" style="display:inline-block;padding:8px 16px;border:1px solid ${BRAND.colors.stone};border-radius:6px;color:${BRAND.colors.mist};font-size:11px;text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;">Instagram</a></td></tr></table><div style="width:100%;height:1px;background:${BRAND.colors.graphite};margin:0 0 20px;"></div><p style="margin:0 0 6px;font-size:12px;color:${BRAND.colors.silver};line-height:1.6;">Questions? Reply to this email or contact</p><a href="mailto:${BRAND.supportEmail}" style="font-size:12px;color:${BRAND.colors.accentLight};text-decoration:none;font-weight:500;">${BRAND.supportEmail}</a><p style="margin:20px 0 0;font-size:10px;color:${BRAND.colors.stone};line-height:1.5;letter-spacing:0.02em;">© 2026 ${BRAND.name}. All rights reserved.<br>Singapore</p></td></tr><tr><td style="height:32px;"></td></tr></table></td></tr></table></body></html>`
+    }
+
+    function heading(t,icon) { return `<h2 style="margin:0 0 16px;font-size:22px;font-weight:600;letter-spacing:-0.02em;color:${BRAND.colors.black};line-height:1.3;">${icon?icon+'&nbsp;&nbsp;':''}${t}</h2>` }
+    function greet(n) { return `<p style="margin:0 0 20px;font-size:15px;color:${BRAND.colors.stone};line-height:1.7;">Dear <strong style="color:${BRAND.colors.charcoal}">${n}</strong>,</p>` }
+    function para(t) { return `<p style="margin:0 0 16px;font-size:14px;color:${BRAND.colors.stone};line-height:1.7;">${t}</p>` }
+    function divider() { return `<div style="width:100%;height:1px;background:${BRAND.colors.smoke};margin:24px 0;"></div>` }
+    function cta(text, url) { return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:28px auto;"><tr><td style="border-radius:8px;background:linear-gradient(135deg,${BRAND.colors.accent} 0%,${BRAND.colors.accentDark} 100%);"><a href="${url}" target="_blank" style="display:inline-block;padding:14px 36px;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#FFFFFF;text-decoration:none;border-radius:8px;">${text}</a></td></tr></table>` }
+
+    function infoCard(title, content) {
+      return `<div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px 24px;margin:20px 0;"><h3 style="margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};">${title}</h3><div style="font-size:14px;line-height:1.7;color:${BRAND.colors.stone};">${content}</div></div>`
+    }
+
+    function addressBlock(a) {
+      const lines = [a.recipient_name, [a.block_building, a.street].filter(Boolean).join(', '), a.unit_number, `Singapore ${a.postal_code}`, `Phone: ${a.phone}`].filter(Boolean)
+      return infoCard('Delivery Address', lines.map(l=>`${l}<br>`).join(''))
+    }
+
+    function itemsTable(items) {
+      const rows = items.map((item,i) => {
+        const isLast = i === items.length - 1
+        const meta = [item.variant_size, item.variant_color].filter(Boolean).join(' · ')
+        return `<tr><td style="padding:14px 0;${isLast?'':`border-bottom:1px solid ${BRAND.colors.smoke};`}vertical-align:top;"><p style="margin:0 0 2px;font-size:14px;font-weight:500;color:${BRAND.colors.charcoal};">${item.product_name}</p>${meta?`<p style="margin:0;font-size:12px;color:${BRAND.colors.slate};">${meta}</p>`:''}<p style="margin:4px 0 0;font-size:12px;color:${BRAND.colors.silver};">Qty: ${item.quantity}</p></td><td style="padding:14px 0;${isLast?'':`border-bottom:1px solid ${BRAND.colors.smoke};`}text-align:right;vertical-align:top;white-space:nowrap;"><p style="margin:0;font-size:14px;font-weight:500;color:${BRAND.colors.charcoal};">${formatCurrency(item.total_price_cents)}</p>${item.quantity>1?`<p style="margin:2px 0 0;font-size:11px;color:${BRAND.colors.silver};">${formatCurrency(item.unit_price_cents)} each</p>`:''}</td></tr>`
+      }).join('')
+      return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:16px 0;"><thead><tr><td style="padding:0 0 10px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};border-bottom:2px solid ${BRAND.colors.charcoal};">Item</td><td style="padding:0 0 10px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};text-align:right;border-bottom:2px solid ${BRAND.colors.charcoal};">Amount</td></tr></thead><tbody>${rows}</tbody></table>`
+    }
+
+    function totalsSummary(t) {
+      const lines = [
+        {l:'Subtotal', v:formatCurrency(t.subtotal_cents)},
+        {l:'GST (9%)', v:formatCurrency(t.gst_cents)},
+        {l:'Delivery', v:t.delivery_cents===0?`<span style="color:${BRAND.colors.success};font-weight:500;">Free</span>`:formatCurrency(t.delivery_cents)},
+      ]
+      return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:8px 0 0;">${lines.map(x=>`<tr><td style="padding:4px 0;font-size:13px;color:${BRAND.colors.slate};">${x.l}</td><td style="padding:4px 0;font-size:13px;color:${BRAND.colors.stone};text-align:right;">${x.v}</td></tr>`).join('')}<tr><td colspan="2" style="padding:8px 0 0;"><div style="height:1px;background:${BRAND.colors.charcoal};"></div></td></tr><tr><td style="padding:12px 0 0;font-size:16px;font-weight:600;color:${BRAND.colors.black};">Total</td><td style="padding:12px 0 0;font-size:16px;font-weight:600;color:${BRAND.colors.black};text-align:right;">${formatCurrency(t.total_cents)}</td></tr></table>`
+    }
+
+    function timeline(current) {
+      const all = ['PLACED','CONFIRMED','PROCESSING','SHIPPED','OUT_FOR_DELIVERY','DELIVERED']
+      if (current === 'CANCELLED') return `<div style="text-align:center;padding:20px 0;">${statusBadge('CANCELLED')}</div>`
+      const ci = all.indexOf(current)
+      const steps = all.map((s,i) => {
+        const active = i<=ci, cur = i===ci
+        const dc = active?BRAND.colors.accent:BRAND.colors.mist
+        const ds = cur?'14px':'10px'
+        const db = cur?`3px solid ${BRAND.colors.accentMuted}`:'none'
+        const lc = active?BRAND.colors.charcoal:BRAND.colors.silver
+        const fw = cur?'600':'400'
+        return `<td style="text-align:center;padding:0 2px;width:${100/all.length}%;"><div style="width:${ds};height:${ds};border-radius:50%;background:${dc};margin:0 auto 6px;border:${db};"></div><p style="margin:0;font-size:9px;letter-spacing:0.04em;color:${lc};font-weight:${fw};line-height:1.3;">${statusName(s).replace(' ','<br>')}</p></td>`
+      })
+      const conn = all.slice(0,-1).map((_,i) => {
+        const lc = i<ci?BRAND.colors.accent:BRAND.colors.mist
+        return `<td style="width:${80/(all.length-1)}%;vertical-align:top;padding-top:5px;"><div style="height:2px;background:${lc};margin:0 -4px;border-radius:1px;"></div></td>`
+      })
+      const merged = []
+      steps.forEach((s,i) => { merged.push(s); if(i<conn.length) merged.push(conn[i]) })
+      return `<div style="margin:24px 0;padding:20px 8px;background:${BRAND.colors.ivory};border-radius:10px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr>${merged.join('')}</tr></table></div>`
+    }
+
+    // ─── Templates ────────────────────────────────────────────
+    const templates = {
+      'order-placed': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading('Thank You for Your Order ✨')}
+          ${greet(d.customer_name)}
+          ${para(`Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> has been received and is being prepared with care.`)}
+          <div style="text-align:center;margin:24px 0;">${statusBadge('PLACED')}</div>
+          ${timeline('PLACED')}
+          <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:24px;margin:20px 0;">
+            <h3 style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};">Order Number</h3>
+            <p style="margin:0 0 16px;font-size:18px;font-weight:600;letter-spacing:0.04em;color:${BRAND.colors.charcoal};">${d.order_number}</p>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td width="50%"><p style="margin:0 0 2px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${BRAND.colors.slate};">Date</p><p style="margin:0;font-size:13px;color:${BRAND.colors.stone};">${formatDate(d.created_at)}</p></td><td width="50%"><p style="margin:0 0 2px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${BRAND.colors.slate};">Payment</p><p style="margin:0;font-size:13px;color:${BRAND.colors.stone};">Cash on Delivery</p></td></tr></table>
+          </div>
+          ${divider()}
+          <h3 style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};">Items Ordered</h3>
+          ${itemsTable(d.items)}
+          ${totalsSummary(d.totals)}
+          ${divider()}
+          ${addressBlock(d.address)}
+          <div style="background:${BRAND.colors.warningLight};border-left:3px solid ${BRAND.colors.warning};border-radius:0 8px 8px 0;padding:14px 18px;margin:20px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.warning};line-height:1.6;"><strong>💰 Cash on Delivery</strong><br>Please prepare <strong>${formatCurrency(d.totals.total_cents)}</strong> in exact change for our delivery partner.</p></div>
+          ${cta('View Your Order', '#')}
+          ${para("We'll send you another email when your order ships. If you have any questions, simply reply to this email.")}
+        `
+        return { subject: `Order Confirmed — ${d.order_number} | AK QIMAASH`, html: baseLayout(content) }
+      },
+
+      'order-confirmed': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading('Your Order is Confirmed ✓')}
+          ${greet(d.customer_name)}
+          ${para(`Great news! Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> has been confirmed and will be prepared shortly.`)}
+          ${timeline('CONFIRMED')}
+          <div style="background:${BRAND.colors.successLight};border-left:3px solid ${BRAND.colors.success};border-radius:0 8px 8px 0;padding:14px 18px;margin:20px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.success};line-height:1.6;"><strong>✓ Payment & order verified</strong><br>Your order is now in our queue and will be prepared soon.</p></div>
+          <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px 24px;margin:20px 0;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td><p style="margin:0 0 2px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${BRAND.colors.slate};">Order</p><p style="margin:0;font-size:15px;font-weight:600;color:${BRAND.colors.charcoal};">${d.order_number}</p></td><td style="text-align:right;"><p style="margin:0 0 2px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${BRAND.colors.slate};">Total</p><p style="margin:0;font-size:15px;font-weight:600;color:${BRAND.colors.charcoal};">${formatCurrency(d.totals.total_cents)}</p></td></tr></table></div>
+          ${cta('Track Your Order', '#')}
+          ${para("We'll notify you once your items are being prepared. Thank you for shopping with us!")}
+        `
+        return { subject: `Order Confirmed — ${d.order_number}`, html: baseLayout(content) }
+      },
+
+      'order-processing': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading("We're Preparing Your Order 🧵")}
+          ${greet(d.customer_name)}
+          ${para(`Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> is now being carefully prepared and packaged for delivery.`)}
+          ${timeline('PROCESSING')}
+          <div style="background:${BRAND.colors.warningLight};border-left:3px solid ${BRAND.colors.warning};border-radius:0 8px 8px 0;padding:14px 18px;margin:20px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.warning};line-height:1.6;"><strong>📦 Packing in progress</strong><br>Our team is carefully preparing your items. You'll receive a shipping notification soon.</p></div>
+          <h3 style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};">Items Being Prepared</h3>
+          ${itemsTable(d.items)}
+          ${cta('View Order Status', '#')}
+          ${para("We'll email you as soon as your order has been shipped.")}
+        `
+        return { subject: `Preparing Your Order — ${d.order_number}`, html: baseLayout(content) }
+      },
+
+      'order-shipped': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading('Your Order is On Its Way! 🚚')}
+          ${greet(d.customer_name)}
+          ${para(`Exciting news! Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> has been shipped and is on its way to you.`)}
+          ${timeline('SHIPPED')}
+          <div style="background:linear-gradient(135deg,#EEF2FF 0%,#DBEAFE 100%);border:1px solid #C7D2FE;border-radius:10px;padding:24px;margin:20px 0;">
+            <h3 style="margin:0 0 16px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#1E3A5F;">Shipping Details</h3>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tr><td style="padding:4px 0;font-size:12px;color:#4A5568;width:40%;">Courier</td><td style="padding:4px 0;font-size:13px;font-weight:500;color:#1A202C;">${d.courier_name}</td></tr>
+              <tr><td style="padding:4px 0;font-size:12px;color:#4A5568;width:40%;">Tracking No.</td><td style="padding:4px 0;font-size:13px;font-weight:600;color:#1A202C;letter-spacing:0.02em;">${d.tracking_number}</td></tr>
+              <tr><td style="padding:4px 0;font-size:12px;color:#4A5568;width:40%;">Est. Delivery</td><td style="padding:4px 0;font-size:13px;font-weight:500;color:#1A202C;">${formatDate(d.estimated_delivery)}</td></tr>
+            </table>
+          </div>
+          <div style="background:${BRAND.colors.warningLight};border-left:3px solid ${BRAND.colors.warning};border-radius:0 8px 8px 0;padding:14px 18px;margin:20px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.warning};line-height:1.6;"><strong>💰 Payment on delivery</strong><br>Please prepare <strong>${formatCurrency(d.totals.total_cents)}</strong> for our delivery partner.</p></div>
+          ${addressBlock(d.address)}
+          ${cta('Track Your Package', '#')}
+          ${para("If no one is available at the delivery address, the courier may contact you to arrange redelivery.")}
+        `
+        return { subject: `Your Order Has Shipped! — ${d.order_number}`, html: baseLayout(content) }
+      },
+
+      'out-for-delivery': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading('Arriving Today! 📍')}
+          ${greet(d.customer_name)}
+          ${para(`Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> is out for delivery and will arrive today.`)}
+          ${timeline('OUT_FOR_DELIVERY')}
+          <div style="background:linear-gradient(135deg,${BRAND.colors.accentSubtle} 0%,#FFF 100%);border:1px solid ${BRAND.colors.accentMuted};border-radius:10px;padding:24px;margin:20px 0;text-align:center;">
+            <p style="margin:0 0 8px;font-size:36px;">🎉</p>
+            <h3 style="margin:0 0 8px;font-size:16px;font-weight:600;color:${BRAND.colors.charcoal};">Almost there!</h3>
+            <p style="margin:0;font-size:13px;color:${BRAND.colors.stone};line-height:1.6;">Our delivery partner is en route to your address.<br>Please ensure someone is available to receive the package.</p>
+          </div>
+          <div style="background:${BRAND.colors.warningLight};border-left:3px solid ${BRAND.colors.warning};border-radius:0 8px 8px 0;padding:14px 18px;margin:20px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.warning};line-height:1.6;"><strong>💰 Cash on Delivery</strong><br>Amount due: <strong>${formatCurrency(d.totals.total_cents)}</strong></p></div>
+          ${addressBlock(d.address)}
+          ${cta('Track Delivery', '#')}
+        `
+        return { subject: `Arriving Today — Order ${d.order_number}`, html: baseLayout(content) }
+      },
+
+      'order-delivered': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading('Your Order Has Been Delivered ✨')}
+          ${greet(d.customer_name)}
+          ${para(`Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> has been successfully delivered.`)}
+          ${timeline('DELIVERED')}
+          <div style="background:${BRAND.colors.successLight};border:1px solid #B7E4C7;border-radius:10px;padding:24px;margin:24px 0;text-align:center;">
+            <p style="margin:0 0 8px;font-size:36px;">✅</p>
+            <h3 style="margin:0 0 8px;font-size:16px;font-weight:600;color:${BRAND.colors.success};">Delivered Successfully</h3>
+            <p style="margin:0;font-size:13px;color:${BRAND.colors.stone};line-height:1.6;">We hope you love your new pieces!</p>
+          </div>
+          ${para("We'd love to hear what you think. Your feedback helps us improve and helps other customers make informed choices.")}
+          ${cta('Leave a Review', '#')}
+          ${divider()}
+          <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px 24px;margin:20px 0;">
+            <h3 style="margin:0 0 12px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};">Need Help?</h3>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tr><td style="padding:6px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.stone};">📧 <a href="mailto:${BRAND.supportEmail}" style="color:${BRAND.colors.accent};text-decoration:none;">${BRAND.supportEmail}</a></p></td></tr>
+              <tr><td style="padding:6px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.stone};">🔄 Exchange or return within 7 days of delivery</p></td></tr>
+            </table>
+          </div>
+          ${para('Thank you for choosing AK QIMAASH. We look forward to serving you again!')}
+        `
+        return { subject: `Delivered — Order ${d.order_number}`, html: baseLayout(content) }
+      },
+
+      'order-cancelled': () => {
+        const d = sampleOrder
+        const content = `
+          ${heading('Order Cancelled')}
+          ${greet(d.customer_name)}
+          ${para(`Your order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong> has been cancelled.`)}
+          <div style="background:${BRAND.colors.errorLight};border-left:3px solid ${BRAND.colors.error};border-radius:0 8px 8px 0;padding:18px;margin:20px 0;"><p style="margin:0;font-size:13px;color:${BRAND.colors.error};line-height:1.6;"><strong>Order cancelled</strong><br>This order was cancelled as per your request. If this was unexpected, please contact our support team.</p></div>
+          <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px 24px;margin:20px 0;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td><p style="margin:0 0 2px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${BRAND.colors.slate};">Order</p><p style="margin:0;font-size:15px;font-weight:600;color:${BRAND.colors.charcoal};text-decoration:line-through;">${d.order_number}</p></td><td style="text-align:right;"><p style="margin:0 0 2px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${BRAND.colors.slate};">Refund</p><p style="margin:0;font-size:15px;font-weight:600;color:${BRAND.colors.success};">N/A</p></td></tr></table></div>
+          ${cta('Continue Shopping', '#')}
+          ${para("We're sorry to see this order go. If you have any questions, please don't hesitate to reply to this email.")}
+        `
+        return { subject: `Order Cancelled — ${d.order_number}`, html: baseLayout(content) }
+      },
+
+      'welcome': () => {
+        const content = `
+          ${heading('Welcome to AK QIMAASH ✨')}
+          ${greet('Aisha Rahman')}
+          <p style="margin:0 0 20px;font-size:15px;color:${BRAND.colors.stone};line-height:1.8;">Thank you for joining us. At AK QIMAASH, we curate modest fashion that blends timeless elegance with contemporary style — crafted with the finest materials and attention to detail.</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:24px 0;">
+            <tr>
+              <td width="50%" style="padding:0 8px 16px 0;vertical-align:top;" class="stack-column">
+                <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px;text-align:center;">
+                  <p style="margin:0 0 8px;font-size:24px;">🧕</p>
+                  <h4 style="margin:0 0 4px;font-size:12px;font-weight:600;color:${BRAND.colors.charcoal};letter-spacing:0.04em;">Curated Collection</h4>
+                  <p style="margin:0;font-size:11px;color:${BRAND.colors.slate};line-height:1.5;">Handpicked modest fashion pieces</p>
+                </div>
+              </td>
+              <td width="50%" style="padding:0 0 16px 8px;vertical-align:top;" class="stack-column">
+                <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px;text-align:center;">
+                  <p style="margin:0 0 8px;font-size:24px;">🚚</p>
+                  <h4 style="margin:0 0 4px;font-size:12px;font-weight:600;color:${BRAND.colors.charcoal};letter-spacing:0.04em;">Fast Delivery</h4>
+                  <p style="margin:0;font-size:11px;color:${BRAND.colors.slate};line-height:1.5;">Delivered right to your door</p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td width="50%" style="padding:0 8px 0 0;vertical-align:top;" class="stack-column">
+                <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px;text-align:center;">
+                  <p style="margin:0 0 8px;font-size:24px;">✨</p>
+                  <h4 style="margin:0 0 4px;font-size:12px;font-weight:600;color:${BRAND.colors.charcoal};letter-spacing:0.04em;">Premium Quality</h4>
+                  <p style="margin:0;font-size:11px;color:${BRAND.colors.slate};line-height:1.5;">Finest fabrics & craftsmanship</p>
+                </div>
+              </td>
+              <td width="50%" style="padding:0 0 0 8px;vertical-align:top;" class="stack-column">
+                <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px;text-align:center;">
+                  <p style="margin:0 0 8px;font-size:24px;">💎</p>
+                  <h4 style="margin:0 0 4px;font-size:12px;font-weight:600;color:${BRAND.colors.charcoal};letter-spacing:0.04em;">Exclusive Styles</h4>
+                  <p style="margin:0;font-size:11px;color:${BRAND.colors.slate};line-height:1.5;">Limited edition releases</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          ${cta('Start Shopping', '#')}
+          ${para('Follow us on Instagram for the latest drops, styling inspiration, and exclusive offers.')}
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;"><tr><td><a href="${BRAND.instagram}" target="_blank" style="display:inline-block;padding:10px 24px;border:1px solid ${BRAND.colors.smoke};border-radius:8px;font-size:12px;color:${BRAND.colors.stone};text-decoration:none;font-weight:500;">📸&nbsp;&nbsp;Follow @akqimaash</a></td></tr></table>
+        `
+        return { subject: `Welcome to AK QIMAASH ✨`, html: baseLayout(content) }
+      },
+
+      'password-reset': () => {
+        const content = `
+          ${heading('Reset Your Password 🔐')}
+          ${greet('Aisha Rahman')}
+          ${para('We received a request to reset the password for your AK QIMAASH account. Click the button below to set a new password.')}
+          ${cta('Reset Password', '#')}
+          <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:20px 24px;margin:24px 0;">
+            <p style="margin:0;font-size:12px;color:${BRAND.colors.slate};line-height:1.7;">
+              ⏳ This link expires in <strong>1 hour</strong>.<br>
+              🔒 If you didn't request this, you can safely ignore this email.<br>
+              ⚠️ Never share this link with anyone.
+            </p>
+          </div>
+          ${para('For security, this link can only be used once. If you need to reset your password again, please request a new link from our website.')}
+        `
+        return { subject: `Reset Your Password — AK QIMAASH`, html: baseLayout(content) }
+      },
+
+      'review-request': () => {
+        const d = sampleOrder
+        const itemsList = d.items.map(item => {
+          const meta = [item.variant_size, item.variant_color].filter(Boolean).join(' · ')
+          return `<tr><td style="padding:10px 0;border-bottom:1px solid ${BRAND.colors.smoke};"><p style="margin:0;font-size:14px;font-weight:500;color:${BRAND.colors.charcoal};">${item.product_name}</p>${meta?`<p style="margin:2px 0 0;font-size:12px;color:${BRAND.colors.slate};">${meta}</p>`:''}</td><td style="padding:10px 0;border-bottom:1px solid ${BRAND.colors.smoke};text-align:right;"><span style="font-size:18px;">⭐</span></td></tr>`
+        }).join('')
+        const content = `
+          ${heading('How Was Your Order? 💬')}
+          ${greet(d.customer_name)}
+          ${para(`We hope you're enjoying your recent purchase from order <strong style="color:${BRAND.colors.charcoal}">${d.order_number}</strong>! Your feedback means the world to us.`)}
+          <div style="background:${BRAND.colors.ivory};border:1px solid ${BRAND.colors.smoke};border-radius:10px;padding:24px;margin:20px 0;">
+            <h3 style="margin:0 0 12px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${BRAND.colors.slate};">Your Items</h3>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">${itemsList}</table>
+          </div>
+          <div style="text-align:center;margin:28px 0;">
+            <p style="margin:0 0 12px;font-size:13px;color:${BRAND.colors.slate};">Tap a star to rate your experience</p>
+            <a href="#" style="text-decoration:none;"><span style="font-size:32px;letter-spacing:8px;">⭐⭐⭐⭐⭐</span></a>
+          </div>
+          ${cta('Write a Review', '#')}
+          ${para('Your review helps other shoppers make confident decisions, and it helps us continue improving.')}
+        `
+        return { subject: `How was your order? — ${d.order_number}`, html: baseLayout(content) }
+      },
+    }
+
+    // ─── UI Logic ─────────────────────────────────────────────
+    const iframe = document.getElementById('email-iframe')
+    const subjectEl = document.getElementById('subject-line')
+    const frameEl = document.getElementById('email-frame')
+
+    function renderTemplate(key) {
+      const { subject, html } = templates[key]()
+      subjectEl.textContent = subject
+      const doc = iframe.contentDocument || iframe.contentWindow.document
+      doc.open()
+      doc.write(html)
+      doc.close()
+      // Auto-resize iframe
+      setTimeout(() => {
+        iframe.style.height = doc.documentElement.scrollHeight + 'px'
+      }, 100)
+    }
+
+    // Tab click
+    document.getElementById('tabs').addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn')
+      if (!btn) return
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      renderTemplate(btn.dataset.template)
+    })
+
+    // Device toggle
+    document.querySelectorAll('.device-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        frameEl.className = `email-frame-wrapper ${btn.dataset.device}`
+        // Re-trigger resize
+        setTimeout(() => {
+          const doc = iframe.contentDocument || iframe.contentWindow.document
+          iframe.style.height = doc.documentElement.scrollHeight + 'px'
+        }, 500)
+      })
+    })
+
+    // Initial render
+    renderTemplate('order-placed')
+  </script>
+</body>
+</html>

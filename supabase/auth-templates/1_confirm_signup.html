@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Confirm Your Email — AK QIMAASH</title>
+  <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; min-width: 100%; background-color: #F5F4F0; }
+    @media only screen and (max-width: 620px) {
+      .email-container { width: 100% !important; max-width: 100% !important; }
+      .mobile-padding { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F5F4F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #F5F4F0;">
+    <tr>
+      <td align="center" style="padding: 40px 12px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container" style="max-width: 600px; width: 100%; background-color: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+          
+          <!-- HEADER -->
+          <tr>
+            <td style="padding: 36px 40px 24px; text-align: center; background-color: #FFFFFF; border-bottom: 1px solid #EBEBEB;">
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #0E0E0E;">
+                AK QIMAASH
+              </h1>
+              <div style="width: 48px; height: 2px; background: #B05C3A; margin: 14px auto 6px; border-radius: 1px;"></div>
+              <p style="margin: 0; font-size: 11px; letter-spacing: 0.12em; color: #757575; text-transform: uppercase;">
+                Modest Luxury, Redefined
+              </p>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding: 40px; background-color: #FFFFFF;" class="mobile-padding">
+              <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 600; color: #0E0E0E; line-height: 1.3;">
+                Confirm Your Email Address ✨
+              </h2>
+
+              <p style="margin: 0 0 16px; font-size: 15px; color: #4A4A4A; line-height: 1.8;">
+                Welcome to AK QIMAASH. Thank you for creating an account with us.
+              </p>
+
+              <p style="margin: 0 0 24px; font-size: 15px; color: #4A4A4A; line-height: 1.8;">
+                Please verify your email address to activate your account and start exploring our curated modest collections.
+              </p>
+
+              <!-- CTA BUTTON -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 32px auto;">
+                <tr>
+                  <td style="border-radius: 8px; background: linear-gradient(135deg, #B05C3A 0%, #8B4427 100%);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display: inline-block; padding: 15px 40px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #FFFFFF; text-decoration: none; border-radius: 8px;">
+                      Confirm My Account
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- VERIFICATION CODE ALTERNATIVE -->
+              {{ if .Token }}
+              <div style="background: #F5F4F0; border: 1px solid #EBEBEB; border-radius: 10px; padding: 20px; text-align: center; margin: 24px 0;">
+                <p style="margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #757575;">
+                  Or enter this confirmation code
+                </p>
+                <p style="margin: 0; font-family: monospace; font-size: 26px; font-weight: 700; letter-spacing: 6px; color: #0E0E0E;">
+                  {{ .Token }}
+                </p>
+              </div>
+              {{ end }}
+
+              <!-- SECURITY NOTICE -->
+              <div style="background: #F5F4F0; border-left: 3px solid #B05C3A; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 28px 0 10px;">
+                <p style="margin: 0; font-size: 12px; color: #4A4A4A; line-height: 1.6;">
+                  🔒 If you did not create an account with AK QIMAASH, you can safely disregard this email.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding: 32px 40px; background-color: #1C1C1C; text-align: center;" class="mobile-padding">
+              <p style="margin: 0 0 6px; font-size: 12px; color: #A8A8A8; line-height: 1.6;">
+                Questions? Reply directly to this email or write to us at
+              </p>
+              <a href="mailto:support@akqimaash.sg" style="font-size: 12px; color: #C97A55; text-decoration: none; font-weight: 500;">
+                support@akqimaash.sg
+              </a>
+
+              <div style="width: 100%; height: 1px; background: #2E2E2E; margin: 20px 0;"></div>
+
+              <p style="margin: 0; font-size: 11px; color: #757575; line-height: 1.5;">
+                © AK QIMAASH. All rights reserved.<br>Singapore
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

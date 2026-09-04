@@ -1,0 +1,195 @@
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Brand palette — restrained luxury
+        brand: {
+          black: '#0E0E0E',
+          charcoal: '#1C1C1C',
+          graphite: '#2E2E2E',
+          stone: '#4A4A4A',
+          slate: '#757575',
+          silver: '#A8A8A8',
+          mist: '#D4D4D4',
+          smoke: '#EBEBEB',
+          ivory: '#F5F4F0',
+          white: '#FAFAFA',
+        },
+        // Accent — warm terracotta
+        accent: {
+          DEFAULT: '#B05C3A',
+          light: '#C97A55',
+          dark: '#8B4427',
+          muted: '#E8C4B0',
+          subtle: '#F5EAE3',
+        },
+        // Semantic
+        surface: {
+          DEFAULT: '#FAFAFA',
+          raised: '#FFFFFF',
+          sunken: '#F0EFEB',
+        },
+        border: {
+          DEFAULT: '#E2E2E2',
+          strong: '#C8C8C8',
+          subtle: '#F0F0F0',
+        },
+        text: {
+          primary: '#0E0E0E',
+          secondary: '#4A4A4A',
+          muted: '#757575',
+          disabled: '#A8A8A8',
+          inverse: '#FAFAFA',
+        },
+        // Status
+        success: { DEFAULT: '#2D6A4F', light: '#D8F3DC', dark: '#1B4332' },
+        warning: { DEFAULT: '#B5700A', light: '#FEF3C7', dark: '#92400E' },
+        error: { DEFAULT: '#9B2335', light: '#FEE2E2', dark: '#7F1D1D' },
+        info: { DEFAULT: '#1E3A5F', light: '#DBEAFE', dark: '#1E3A5F' },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        editorial: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '1rem' }],
+        xs: ['0.75rem', { lineHeight: '1.125rem' }],
+        sm: ['0.875rem', { lineHeight: '1.375rem' }],
+        base: ['1rem', { lineHeight: '1.625rem' }],
+        lg: ['1.125rem', { lineHeight: '1.75rem' }],
+        xl: ['1.25rem', { lineHeight: '1.875rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.375rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.75rem' }],
+        '5xl': ['3rem', { lineHeight: '3.5rem' }],
+        '6xl': ['3.75rem', { lineHeight: '4.25rem' }],
+        '7xl': ['4.5rem', { lineHeight: '5rem' }],
+      },
+      letterSpacing: {
+        tightest: '-0.04em',
+        tighter: '-0.02em',
+        tight: '-0.01em',
+        normal: '0',
+        wide: '0.02em',
+        wider: '0.05em',
+        widest: '0.1em',
+        caps: '0.15em',
+      },
+      spacing: {
+        '4.5': '1.125rem',
+        '13': '3.25rem',
+        '15': '3.75rem',
+        '17': '4.25rem',
+        '18': '4.5rem',
+        '22': '5.5rem',
+        '26': '6.5rem',
+        '30': '7.5rem',
+      },
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
+        container: '1320px',
+      },
+      screens: {
+        xs: '375px',
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1440px',
+      },
+      borderRadius: {
+        none: '0',
+        sm: '2px',
+        DEFAULT: '4px',
+        md: '6px',
+        lg: '8px',
+        xl: '12px',
+        '2xl': '16px',
+        full: '9999px',
+      },
+      boxShadow: {
+        xs: '0 1px 2px 0 rgba(0,0,0,0.04)',
+        sm: '0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04)',
+        DEFAULT: '0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04)',
+        md: '0 8px 16px -4px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04)',
+        lg: '0 16px 32px -8px rgba(0,0,0,0.10), 0 8px 16px -8px rgba(0,0,0,0.04)',
+        xl: '0 24px 48px -12px rgba(0,0,0,0.14)',
+        card: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        'card-hover': '0 8px 24px rgba(0,0,0,0.10)',
+        inner: 'inset 0 2px 4px 0 rgba(0,0,0,0.04)',
+        none: 'none',
+      },
+      transitionTimingFunction: {
+        'out-expo': 'cubic-bezier(0.19, 1, 0.22, 1)',
+        'in-expo': 'cubic-bezier(0.95, 0.05, 0.795, 0.035)',
+        smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      transitionDuration: {
+        '150': '150ms',
+        '200': '200ms',
+        '300': '300ms',
+        '400': '400ms',
+        '500': '500ms',
+      },
+      animation: {
+        'fade-in': 'fadeIn 200ms ease-out',
+        'fade-up': 'fadeUp 300ms cubic-bezier(0.19, 1, 0.22, 1)',
+        'slide-in-right': 'slideInRight 300ms cubic-bezier(0.19, 1, 0.22, 1)',
+        'slide-in-left': 'slideInLeft 300ms cubic-bezier(0.19, 1, 0.22, 1)',
+        'slide-up': 'slideUp 300ms cubic-bezier(0.19, 1, 0.22, 1)',
+        'skeleton': 'skeleton 1.5s ease-in-out infinite',
+        'spin-slow': 'spin 2s linear infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        slideInLeft: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        skeleton: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.4' },
+        },
+      },
+      zIndex: {
+        '1': '1',
+        '10': '10',
+        '20': '20',
+        '30': '30',
+        '40': '40',
+        '50': '50',
+        'sticky': '100',
+        'overlay': '200',
+        'modal': '300',
+        'toast': '400',
+        'tooltip': '500',
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config
