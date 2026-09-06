@@ -416,18 +416,18 @@ export function HomePage() {
         <div className="container-main">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left: Editorial Image */}
-            <div className="aspect-[4/5] bg-surface-sunken overflow-hidden rounded-xs relative">
+            <div className="aspect-[4/5] bg-surface-sunken overflow-hidden rounded-xs relative shadow-sm">
               <img
-                src="/images/categories/outerwear.jpg"
-                alt="The Art of Modesty — AK QIMAASH"
-                className="w-full h-full object-cover object-center"
+                src="/images/about-singapore-hero.jpg"
+                alt="The Art of Modesty — AK QIMAASH Singapore Atelier"
+                className="w-full h-full object-cover object-center hover:scale-103 transition-transform duration-700"
                 loading="lazy"
               />
             </div>
 
             {/* Right: Thoughtful Brand Narrative */}
             <div className="lg:max-w-lg space-y-6">
-              <p className="editorial-subheading">The AK QIMAASH Edit</p>
+              <p className="editorial-subheading">The Singapore Atelier</p>
               <h2 className="font-editorial text-4xl sm:text-5xl lg:text-6xl text-brand-black leading-tight uppercase font-light tracking-tight">
                 The Art of Modesty
               </h2>
@@ -436,16 +436,22 @@ export function HomePage() {
                   Thoughtfully designed pieces for women who value quiet confidence, timeless form, and considered detail.
                 </p>
                 <p>
-                  Rooted in Singapore, we combine architectural draping, breathable natural fibres, and meticulous tailored silhouettes created for contemporary everyday living.
+                  Rooted in Singapore, we combine architectural draping, breathable natural fibres, and meticulous tailored silhouettes created for contemporary equatorial living.
                 </p>
               </div>
-              <div className="pt-4">
+              <div className="pt-4 flex items-center gap-6">
+                <Link
+                  to="/pages/about"
+                  className="inline-flex items-center gap-2 text-xs font-sans uppercase tracking-[0.2em] font-semibold text-brand-black border-b border-brand-black pb-1 hover:text-accent hover:border-accent transition-colors"
+                >
+                  Our Philosophy
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
                 <Link
                   to="/shop"
-                  className="inline-flex items-center gap-2 text-xs font-sans uppercase tracking-[0.2em] font-medium text-brand-black border-b border-brand-black pb-1.5 hover:text-accent hover:border-accent transition-colors"
+                  className="inline-flex items-center gap-2 text-xs font-sans uppercase tracking-[0.2em] font-medium text-brand-stone hover:text-brand-black transition-colors"
                 >
-                  Discover AK QIMAASH
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  Shop The Edit
                 </Link>
               </div>
             </div>

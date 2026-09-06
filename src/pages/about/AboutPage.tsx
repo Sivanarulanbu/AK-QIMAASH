@@ -196,7 +196,7 @@ export const ABOUT_PROTOTYPES: Record<AboutPrototypeId, AboutPrototype> = {
         detail: 'Numbered production runs made to be treasured for years.',
       },
     ],
-    heroImage: '/images/hero-slide-4.jpg',
+    heroImage: '/images/about-singapore-hero.jpg',
     heroImageAlt: 'AK QIMAASH Singapore Metropolitan Modest Luxury',
     atelierImage1: '/images/hero-slide-4.jpg',
     atelierImage2: '/images/hero-slide-2.jpg',
