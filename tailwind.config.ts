@@ -132,12 +132,22 @@ const config: Config = {
         'in-expo': 'cubic-bezier(0.95, 0.05, 0.795, 0.035)',
         smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
+      aspectRatio: {
+        'product': '3 / 4',
+        'editorial': '3 / 4',
+        'portrait': '4 / 5',
+        'wide': '16 / 9',
+      },
+      scale: {
+        '102': '1.02',
+      },
       transitionDuration: {
         '150': '150ms',
         '200': '200ms',
         '300': '300ms',
         '400': '400ms',
         '500': '500ms',
+        '700': '700ms',
       },
       animation: {
         'fade-in': 'fadeIn 200ms ease-out',

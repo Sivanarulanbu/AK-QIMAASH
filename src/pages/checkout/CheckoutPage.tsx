@@ -1,24 +1,21 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { supabase } from '@/lib/supabase'
-import { sgAddressSchema, type SGAddressFormData } from '@/schemas'
-import { calculateOrderTotals, formatPrice, COMMERCE_CONFIG } from '@/lib/commerce'
-import { Input, Textarea } from '@/components/ui/FormFields'
+import type { SGAddressFormData } from '@/schemas'
+import { calculateOrderTotals } from '@/lib/commerce'
 import { Button } from '@/components/ui/Button'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { cn } from '@/utils'
-import type { Database } from '@/types/database'
 import { sendOrderEmail } from '@/services/emailService'
+import { AtelierAddressStep } from './components/AtelierAddressStep'
+import { ElevatedOrderSummary } from './components/ElevatedOrderSummary'
 
 type Step = 'address' | 'review' | 'confirm' | 'placed'
 
 export function CheckoutPage() {
-  const navigate = useNavigate()
   const { items, subtotalCents, clearCart } = useCartStore()
   const user = useAuthStore((s) => s.user)
   const [step, setStep] = useState<Step>('address')
@@ -31,13 +28,11 @@ export function CheckoutPage() {
   const { gst, delivery, total } = calculateOrderTotals(subtotal)
 
   if (!user) {
-    navigate('/auth/login', { state: { from: { pathname: '/checkout' } } })
-    return null
+    return <Navigate to="/auth/login" state={{ from: { pathname: '/checkout' } }} replace />
   }
 
   if (items.length === 0 && step !== 'placed') {
-    navigate('/cart')
-    return null
+    return <Navigate to="/shop" replace />
   }
 
   const handleAddressSubmit = (address: SGAddressFormData) => {
@@ -199,7 +194,10 @@ function resolveUUID(id: string): string {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 mt-8">
               <div>
                 {step === 'address' && (
-                  <AddressStep onSubmit={handleAddressSubmit} />
+                  <AtelierAddressStep
+                    onSubmit={handleAddressSubmit}
+                    defaultValues={savedAddress}
+                  />
                 )}
                 {step === 'review' && savedAddress && (
                   <ReviewStep
@@ -221,7 +219,13 @@ function resolveUUID(id: string): string {
 
               {/* Order summary sidebar */}
               <div>
-                <OrderSummary items={items} subtotal={subtotal} gst={gst} delivery={delivery} total={total} />
+                <ElevatedOrderSummary
+                  items={items}
+                  subtotal={subtotal}
+                  gst={gst}
+                  delivery={delivery}
+                  total={total}
+                />
               </div>
             </div>
           </>
@@ -233,65 +237,50 @@ function resolveUUID(id: string): string {
 
 function CheckoutSteps({ currentStep }: { currentStep: Step }) {
   const steps = [
-    { id: 'address', label: 'Address' },
-    { id: 'review', label: 'Review' },
-    { id: 'confirm', label: 'Confirm' },
+    { id: 'address', label: 'ADDRESS', num: '①' },
+    { id: 'review', label: 'REVIEW', num: '②' },
+    { id: 'confirm', label: 'CONFIRM', num: '③' },
+    { id: 'placed', label: 'DONE', num: '④' },
   ]
   const currentIndex = steps.findIndex((s) => s.id === currentStep)
 
   return (
-    <nav aria-label="Checkout progress">
-      <ol className="flex items-center justify-center gap-0">
-        {steps.map((step, i) => (
-          <li key={step.id} className="flex items-center">
-            <span
-              className={cn(
-                'text-sm font-medium px-3 py-1 rounded',
-                i === currentIndex ? 'text-text-primary' : i < currentIndex ? 'text-text-muted' : 'text-text-disabled'
+    <nav aria-label="Checkout progress" className="py-4 mb-2">
+      <ol className="flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto">
+        {steps.map((step, i) => {
+          const isCurrent = i === currentIndex
+          const isPassed = i < currentIndex
+
+          return (
+            <li key={step.id} className="flex items-center gap-2 sm:gap-4">
+              <span
+                className={cn(
+                  'text-xs font-sans uppercase tracking-[0.15em] flex items-center gap-1.5 transition-colors whitespace-nowrap',
+                  isCurrent
+                    ? 'text-brand-black font-semibold'
+                    : isPassed
+                    ? 'text-text-secondary'
+                    : 'text-text-disabled'
+                )}
+                aria-current={isCurrent ? 'step' : undefined}
+              >
+                <span className="font-editorial text-sm">{step.num}</span>
+                <span>{step.label}</span>
+              </span>
+              {i < steps.length - 1 && (
+                <div
+                  className={cn(
+                    'w-6 sm:w-12 h-[1px] transition-colors',
+                    isPassed ? 'bg-brand-black' : 'bg-border'
+                  )}
+                  aria-hidden="true"
+                />
               )}
-              aria-current={i === currentIndex ? 'step' : undefined}
-            >
-              {step.label}
-            </span>
-            {i < steps.length - 1 && (
-              <span className="text-border-strong mx-1 text-xs">/</span>
-            )}
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ol>
     </nav>
-  )
-}
-
-function AddressStep({ onSubmit }: { onSubmit: (data: SGAddressFormData) => void }) {
-  const user = useAuthStore((s) => s.user)
-  const { register, handleSubmit, formState: { errors } } = useForm<SGAddressFormData>({ // eslint-disable-line
-    resolver: zodResolver(sgAddressSchema) as any,
-    defaultValues: { is_default: false },
-  })
-
-  return (
-    <div>
-      <h2 className="text-lg font-semibold text-text-primary mb-5">Delivery address</h2>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Recipient name" {...register('recipient_name')} error={errors.recipient_name?.message} required />
-          <Input label="Phone number" type="tel" placeholder="+65 9123 4567" {...register('phone')} error={errors.phone?.message} required hint="Singapore number" />
-        </div>
-        <Input label="Block / Building name" {...register('block_building')} error={errors.block_building?.message} />
-        <Input label="Street address" {...register('street')} error={errors.street?.message} required />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Unit number" placeholder="#01-01" {...register('unit_number')} error={errors.unit_number?.message} />
-          <Input label="Postal code" placeholder="6-digit code" maxLength={6} {...register('postal_code')} error={errors.postal_code?.message} required />
-        </div>
-        <Textarea label="Delivery instructions (optional)" placeholder="Any special instructions for our courier" {...register('additional_info')} error={errors.additional_info?.message} />
-
-        <Button type="submit" variant="primary" size="lg" className="w-full">
-          Continue to Review
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </form>
-    </div>
   )
 }
 
@@ -348,7 +337,7 @@ function ReviewStep({
 }
 
 function ConfirmStep({
-  address,
+  address: _address,
   onBack,
   onPlace,
   isPlacing,
@@ -426,61 +415,6 @@ function OrderPlacedStep({ orderNumber }: { orderNumber: string }) {
         <Button variant="secondary" size="lg" onClick={() => navigate('/shop')} className="min-w-[160px]">
           Continue Shopping
         </Button>
-      </div>
-    </div>
-  )
-}
-
-function OrderSummary({ items, subtotal, gst, delivery, total }: {
-  items: ReturnType<typeof useCartStore.getState>['items']
-  subtotal: number
-  gst: number
-  delivery: number
-  total: number
-}) {
-  return (
-    <div className="card p-5 h-fit">
-      <h3 className="text-sm font-semibold text-text-primary mb-4">
-        Order summary ({items.length} {items.length === 1 ? 'item' : 'items'})
-      </h3>
-      <div className="space-y-3 mb-4">
-        {items.map((item) => (
-          <div key={item.id} className="flex gap-3">
-            <div className="w-14 h-14 bg-surface-sunken rounded overflow-hidden flex-shrink-0">
-              {item.imageUrl && (
-                <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" loading="lazy" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-text-primary line-clamp-2 leading-snug">{item.productName}</p>
-              <p className="text-xs text-text-muted mt-0.5">
-                {[item.variantSize, item.variantColor].filter(Boolean).join(' · ')}
-                {' '}&times;{item.quantity}
-              </p>
-              <p className="text-xs font-semibold text-text-primary mt-0.5">
-                {formatPrice(item.priceCents * item.quantity)}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-border pt-3 space-y-2">
-        <div className="flex justify-between text-sm text-text-secondary">
-          <span>Subtotal</span>
-          <span>{formatPrice(subtotal)}</span>
-        </div>
-        <div className="flex justify-between text-sm text-text-secondary">
-          <span>GST (9%)</span>
-          <span>{formatPrice(gst)}</span>
-        </div>
-        <div className="flex justify-between text-sm text-text-secondary">
-          <span>Delivery</span>
-          <span>{delivery === 0 ? <span className="text-success">Free</span> : formatPrice(delivery)}</span>
-        </div>
-        <div className="flex justify-between text-base font-semibold text-text-primary pt-1.5 border-t border-border">
-          <span>Total</span>
-          <span>{formatPrice(total)}</span>
-        </div>
       </div>
     </div>
   )

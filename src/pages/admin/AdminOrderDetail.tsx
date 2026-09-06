@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 import { Input } from '@/components/ui/FormFields'
+import { Can } from '@/features/auth/PermissionGate'
 import type { Database } from '@/types/database'
 
 type OrderStatus = Database['public']['Enums']['order_status']
@@ -82,33 +83,35 @@ export function AdminOrderDetail() {
 
           {/* Status update */}
           {allowedTransitions.length > 0 && (
-            <div className="card p-5">
-              <h2 className="text-sm font-semibold mb-4">Update status</h2>
-              <form onSubmit={handleUpdateStatus} className="space-y-3">
-                {error && <div role="alert" className="p-3 bg-error-light rounded text-sm text-error-dark">{error}</div>}
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="select-base"
-                  aria-label="Select new status"
-                >
-                  <option value="">Select new status...</option>
-                  {allowedTransitions.map((s: string) => (
-                    <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                  ))}
-                </select>
-                {(newStatus === 'SHIPPED' || newStatus === 'OUT_FOR_DELIVERY') && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input label="Courier" value={courierName} onChange={(e) => setCourierName(e.target.value)} placeholder="Ninja Van" />
-                    <Input label="Tracking number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
-                  </div>
-                )}
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} className="textarea-base" placeholder="Internal note (optional)" rows={2} />
-                <Button type="submit" variant="primary" size="md" isLoading={isPending} disabled={!newStatus}>
-                  Update Status
-                </Button>
-              </form>
-            </div>
+            <Can resource="orders" action="update_status">
+              <div className="card p-5">
+                <h2 className="text-sm font-semibold mb-4">Update status</h2>
+                <form onSubmit={handleUpdateStatus} className="space-y-3">
+                  {error && <div role="alert" className="p-3 bg-error-light rounded text-sm text-error-dark">{error}</div>}
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="select-base"
+                    aria-label="Select new status"
+                  >
+                    <option value="">Select new status...</option>
+                    {allowedTransitions.map((s: string) => (
+                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                    ))}
+                  </select>
+                  {(newStatus === 'SHIPPED' || newStatus === 'OUT_FOR_DELIVERY') && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="Courier" value={courierName} onChange={(e) => setCourierName(e.target.value)} placeholder="Ninja Van" />
+                      <Input label="Tracking number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
+                    </div>
+                  )}
+                  <textarea value={note} onChange={(e) => setNote(e.target.value)} className="textarea-base" placeholder="Internal note (optional)" rows={2} />
+                  <Button type="submit" variant="primary" size="md" isLoading={isPending} disabled={!newStatus}>
+                    Update Status
+                  </Button>
+                </form>
+              </div>
+            </Can>
           )}
 
           {/* Status history */}

@@ -229,7 +229,10 @@ export function useCategories() {
           .order('position')
 
         if (data && data.length > 0 && !error) {
-          return data as any[]
+          return (data as any[]).map((cat) => ({
+            ...cat,
+            image_url: cat.image_url || `/images/categories/${cat.slug}.jpg`,
+          }))
         }
       } catch {
         // fall through

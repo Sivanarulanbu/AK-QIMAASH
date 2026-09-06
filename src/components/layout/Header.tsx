@@ -1,138 +1,158 @@
-import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, ShoppingBag, Heart, User, Menu, X, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { Search, ShoppingBag, Heart, User, Menu, X, ShieldCheck } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
+import { useAuth } from '@/features/auth/AuthProvider'
 import { useCategories } from '@/features/products/useProducts'
+import { SearchOverlay } from '@/components/layout/SearchOverlay'
 import { cn } from '@/utils'
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
   const location = useLocation()
 
   const totalItems = useCartStore((s) => s.totalItems())
   const openCart = useCartStore((s) => s.openCart)
   const user = useAuthStore((s) => s.user)
+  const { isStaff, role } = useAuth()
   const { data: categories } = useCategories()
 
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 4)
+    const onScroll = () => setIsScrolled(window.scrollY > 15)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  useEffect(() => {
-    setMobileMenuOpen(false)
-    setSearchOpen(false)
-  }, [location.pathname])
-
-  useEffect(() => {
-    if (searchOpen) {
-      setTimeout(() => searchInputRef.current?.focus(), 100)
-    }
-  }, [searchOpen])
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchOpen(false)
-      setSearchQuery('')
-    }
-  }
 
   return (
     <>
       <header
         className={cn(
-          'sticky top-0 z-sticky bg-surface-raised transition-shadow duration-200',
-          isScrolled && 'shadow-sm'
+          'sticky top-0 z-sticky transition-all duration-300',
+          isScrolled
+            ? 'bg-white/95 backdrop-blur-md border-b border-border/80 shadow-xs'
+            : 'bg-white border-b border-border/40'
         )}
       >
-        {/* Top announcement bar */}
-        <div className="bg-brand-black text-text-inverse text-center py-2 text-xs tracking-wide hidden sm:block">
-          Free delivery on orders above $100 &middot; Cash on Delivery available
-        </div>
-
-        {/* Main navigation */}
+        {/* Main Navigation Bar */}
         <div className="container-main">
-          <div className="flex items-center h-16 gap-4">
-            {/* Mobile menu button */}
-            <button
-              className="btn-icon btn-ghost md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menu"
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-
-            {/* Logo */}
-            <Link
-              to="/"
-              className="flex-shrink-0 mr-auto md:mr-0"
-              aria-label="AK QIMAASH Home"
-            >
-              <span className="font-editorial font-medium text-xl tracking-tighter text-brand-black">
-                AK QIMAASH
-              </span>
-            </Link>
-
-            {/* Desktop navigation */}
-            <nav className="hidden md:flex items-center gap-1 mx-8 flex-1 justify-center" aria-label="Main navigation">
-              <NavLink to="/shop">Shop</NavLink>
-              <NavLink to="/shop?sort=newest">New Arrivals</NavLink>
-              {categories?.slice(0, 4).map((cat) => (
-                <NavLink key={cat.id} to={`/shop?category=${cat.slug}`}>
-                  {cat.name}
-                </NavLink>
-              ))}
-            </nav>
-
-            {/* Desktop actions */}
-            <div className="flex items-center gap-1">
+          <div
+            className={cn(
+              'flex items-center justify-between transition-all duration-300',
+              isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
+            )}
+          >
+            {/* Left: Mobile hamburger or Brand on mobile */}
+            <div className="flex items-center gap-3">
               <button
-                className="btn-icon btn-ghost"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Search"
+                className="btn-icon btn-ghost md:hidden -ml-2"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Menu"
+                aria-expanded={mobileMenuOpen}
               >
-                <Search className="h-[18px] w-[18px]" />
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
 
+              {/* Brand Logo */}
+              <Link
+                to="/"
+                className="flex items-center focus-visible:outline-none"
+                aria-label="AK QIMAASH Home"
+              >
+                <span className="font-editorial text-2xl sm:text-3xl tracking-tight text-brand-black uppercase font-medium">
+                  AK QIMAASH
+                </span>
+              </Link>
+            </div>
+
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">
+              <NavLink to="/shop">SHOP</NavLink>
+              <NavLink to="/shop?sort=newest">NEW IN</NavLink>
+              {categories && categories.length > 0 && (
+                <div className="relative group">
+                  <NavLink to="/shop">COLLECTIONS</NavLink>
+                  {/* Subtle dropdown on hover */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200">
+                    <div className="bg-surface-raised border border-border shadow-md py-2 px-3 rounded-sm min-w-[160px]">
+                      {categories.map((cat) => (
+                        <Link
+                          key={cat.id}
+                          to={`/shop?category=${cat.slug}`}
+                          className="block px-3 py-1.5 text-xs text-text-secondary hover:text-brand-black hover:bg-brand-smoke transition-colors font-sans uppercase tracking-wider"
+                        >
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <NavLink to="/pages/about">ABOUT</NavLink>
+            </nav>
+
+            {/* Right Action Icons: Search, Account, Bag */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Search */}
+              <button
+                onClick={() => setSearchOverlayOpen(true)}
+                className="flex items-center gap-1.5 p-2 text-text-primary hover:text-accent transition-colors"
+                aria-label="Search catalog"
+              >
+                <Search className="h-4 w-4 stroke-[1.5]" />
+                <span className="hidden lg:inline text-xs font-sans tracking-widest uppercase text-text-secondary hover:text-text-primary font-medium">
+                  SEARCH
+                </span>
+              </button>
+
+              {/* Wishlist */}
               <Link
                 to="/wishlist"
-                className="btn-icon btn-ghost hidden sm:inline-flex"
+                className="hidden sm:flex items-center p-2 text-text-primary hover:text-accent transition-colors"
                 aria-label="Wishlist"
               >
-                <Heart className="h-[18px] w-[18px]" />
+                <Heart className="h-4 w-4 stroke-[1.5]" />
               </Link>
 
+              {/* Staff / Admin Badge */}
+              {isStaff && (
+                <Link
+                  to="/admin"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-brand-charcoal text-white hover:bg-brand-black transition-all shadow-xs border border-brand-charcoal"
+                  aria-label="Admin Dashboard"
+                  title="Open Admin Suite"
+                >
+                  <ShieldCheck className="h-3 w-3 text-amber-400" />
+                  <span className="uppercase tracking-wider">{role === 'ADMIN' ? 'Admin' : 'Staff'}</span>
+                </Link>
+              )}
+
+              {/* Account */}
               <Link
                 to={user ? '/account' : '/auth/login'}
-                className="btn-icon btn-ghost hidden sm:inline-flex"
+                className="hidden sm:flex items-center gap-1.5 p-2 text-text-primary hover:text-accent transition-colors"
                 aria-label={user ? 'My Account' : 'Sign In'}
               >
-                <User className="h-[18px] w-[18px]" />
+                <User className="h-4 w-4 stroke-[1.5]" />
+                <span className="hidden lg:inline text-xs font-sans tracking-widest uppercase text-text-secondary hover:text-text-primary font-medium">
+                  {user ? 'ACCOUNT' : 'SIGN IN'}
+                </span>
               </Link>
 
+              {/* Shopping Bag */}
               <button
-                className="btn-icon btn-ghost relative"
                 onClick={openCart}
-                aria-label={`Shopping bag, ${totalItems} items`}
+                className="flex items-center gap-1.5 p-2 text-text-primary hover:text-accent transition-colors relative"
+                aria-label={`Shopping bag with ${totalItems} items`}
               >
-                <ShoppingBag className="h-[18px] w-[18px]" />
+                <ShoppingBag className="h-4 w-4 stroke-[1.5]" />
+                <span className="hidden lg:inline text-xs font-sans tracking-widest uppercase text-text-secondary hover:text-text-primary font-medium">
+                  BAG
+                </span>
                 {totalItems > 0 && (
-                  <span
-                    className="absolute -top-0.5 -right-0.5 bg-brand-black text-white
-                               text-[10px] font-semibold w-4 h-4 rounded-full
-                               flex items-center justify-center"
-                    aria-hidden="true"
-                  >
+                  <span className="bg-brand-black text-white text-[10px] font-medium w-4 h-4 rounded-full flex items-center justify-center -ml-0.5">
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}
@@ -141,20 +161,37 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border bg-surface-raised animate-fade-in">
-            <nav className="container-main py-4 space-y-0.5" aria-label="Mobile navigation">
-              <MobileNavLink to="/shop">Shop All</MobileNavLink>
-              <MobileNavLink to="/shop?sort=newest">New Arrivals</MobileNavLink>
+            <nav className="container-main py-6 space-y-1" aria-label="Mobile navigation">
+              {isStaff && (
+                <div className="pb-3 mb-3 border-b border-border">
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-purple-700 font-semibold flex items-center gap-2 bg-purple-500/10 rounded-md p-3 text-xs uppercase tracking-wider"
+                  >
+                    <ShieldCheck className="h-4 w-4 text-purple-600" />
+                    Admin Portal ({role})
+                  </Link>
+                </div>
+              )}
+              <MobileNavLink to="/shop" onClick={() => setMobileMenuOpen(false)}>Shop All</MobileNavLink>
+              <MobileNavLink to="/shop?sort=newest" onClick={() => setMobileMenuOpen(false)}>New In</MobileNavLink>
               {categories?.map((cat) => (
-                <MobileNavLink key={cat.id} to={`/shop?category=${cat.slug}`}>
+                <MobileNavLink
+                  key={cat.id}
+                  to={`/shop?category=${cat.slug}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   {cat.name}
                 </MobileNavLink>
               ))}
-              <div className="divider my-2" />
-              <MobileNavLink to="/wishlist">Wishlist</MobileNavLink>
-              <MobileNavLink to={user ? '/account' : '/auth/login'}>
+              <MobileNavLink to="/pages/about" onClick={() => setMobileMenuOpen(false)}>About AK QIMAASH</MobileNavLink>
+              <div className="divider my-3" />
+              <MobileNavLink to="/wishlist" onClick={() => setMobileMenuOpen(false)}>Wishlist</MobileNavLink>
+              <MobileNavLink to={user ? '/account' : '/auth/login'} onClick={() => setMobileMenuOpen(false)}>
                 {user ? 'My Account' : 'Sign In'}
               </MobileNavLink>
             </nav>
@@ -162,54 +199,24 @@ export function Header() {
         )}
       </header>
 
-      {/* Search overlay */}
-      {searchOpen && (
-        <div
-          className="fixed inset-0 bg-brand-black/60 backdrop-blur-sm z-overlay flex items-start pt-20 px-4"
-          onClick={() => setSearchOpen(false)}
-        >
-          <div
-            className="w-full max-w-2xl mx-auto bg-surface-raised rounded-xl shadow-xl overflow-hidden animate-fade-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <form onSubmit={handleSearch} className="flex items-center px-4 py-3 gap-3">
-              <Search className="h-5 w-5 text-text-muted flex-shrink-0" aria-hidden="true" />
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for products..."
-                className="flex-1 text-base text-text-primary bg-transparent outline-none placeholder:text-text-disabled"
-                aria-label="Search products"
-              />
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                className="btn-icon btn-ghost"
-                aria-label="Close search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Luxury Search Overlay */}
+      <SearchOverlay isOpen={searchOverlayOpen} onClose={() => setSearchOverlayOpen(false)} />
     </>
   )
 }
 
 function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   const location = useLocation()
-  const isActive = location.pathname === to || location.search.includes(to.split('?')[1] || '___')
+  const isActive = location.pathname === to || (to.includes('?') && location.search.includes(to.split('?')[1]))
 
   return (
     <Link
       to={to}
       className={cn(
-        'px-3 py-2 text-sm font-medium transition-colors duration-150 rounded',
-        'hover:text-text-primary hover:bg-brand-smoke',
-        isActive ? 'text-text-primary' : 'text-text-secondary'
+        'text-xs tracking-[0.15em] font-sans font-medium transition-colors duration-200 uppercase py-1 relative',
+        isActive
+          ? 'text-brand-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-brand-black'
+          : 'text-text-secondary hover:text-brand-black'
       )}
     >
       {children}
@@ -217,12 +224,20 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   )
 }
 
-function MobileNavLink({ to, children }: { to: string; children: React.ReactNode }) {
+function MobileNavLink({
+  to,
+  children,
+  onClick,
+}: {
+  to: string
+  children: React.ReactNode
+  onClick?: () => void
+}) {
   return (
     <Link
       to={to}
-      className="block py-2.5 px-2 text-base text-text-secondary hover:text-text-primary
-                 hover:bg-brand-smoke rounded transition-colors duration-150"
+      onClick={onClick}
+      className="block py-2.5 px-2 text-sm font-sans text-text-primary hover:bg-brand-smoke transition-colors uppercase tracking-wider"
     >
       {children}
     </Link>

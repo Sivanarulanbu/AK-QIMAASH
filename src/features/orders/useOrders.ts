@@ -102,7 +102,7 @@ export function useAdminOrders(filters: {
       }
 
       if (search) {
-        query = query.or(`order_number.ilike.%${search}%`)
+        query = query.or(`order_number.ilike.%${search}%,address_snapshot->>recipient_name.ilike.%${search}%`)
       }
 
       const { data, error, count } = await query

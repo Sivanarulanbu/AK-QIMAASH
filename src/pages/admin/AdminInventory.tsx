@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/FormFields'
 import { Modal } from '@/components/ui/Drawer'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { formatDate } from '@/utils'
+import { Can } from '@/features/auth/PermissionGate'
 
 export function AdminInventoryPage() {
   const [adjustModalOpen, setAdjustModalOpen] = useState(false)
@@ -59,12 +60,14 @@ export function AdminInventoryPage() {
                       </span>
                     </td>
                     <td>
-                      <button
-                        onClick={() => { setSelectedVariant(v); setAdjustModalOpen(true) }}
-                        className="text-xs text-accent hover:underline"
-                      >
-                        Adjust
-                      </button>
+                      <Can resource="inventory" action="adjust">
+                        <button
+                          onClick={() => { setSelectedVariant(v); setAdjustModalOpen(true) }}
+                          className="text-xs text-accent hover:underline"
+                        >
+                          Adjust
+                        </button>
+                      </Can>
                     </td>
                   </tr>
                 ))}

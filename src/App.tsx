@@ -15,12 +15,16 @@ const queryClient = new QueryClient({
   },
 })
 
+import { ToastProvider } from '@/components/ui/Toast'
+
 function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>
     </HelmetProvider>

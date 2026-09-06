@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { SEOHead } from '@/components/seo/SEOHead'
+import { AboutPage } from '@/pages/about/AboutPage'
 
 const STATIC_PAGES: Record<string, { title: string; content: string }> = {
   shipping: {
@@ -89,6 +90,11 @@ By using our website, you consent to our use of essential cookies.`,
 
 export function StaticPage() {
   const { slug } = useParams<{ slug: string }>()
+
+  if (slug === 'about') {
+    return <AboutPage />
+  }
+
   const page = STATIC_PAGES[slug || '']
 
   if (!page) {

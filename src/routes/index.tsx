@@ -29,6 +29,9 @@ const AddressesPage = lazy(() =>
 const StaticPage = lazy(() =>
   import('@/pages/static/StaticPage').then((m) => ({ default: m.StaticPage }))
 )
+const AboutPage = lazy(() =>
+  import('@/pages/about/AboutPage').then((m) => ({ default: m.AboutPage }))
+)
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 )
@@ -62,6 +65,9 @@ const AdminInventoryPage = lazy(() =>
 )
 const AdminCustomersPage = lazy(() =>
   import('@/pages/admin/AdminCustomers').then((m) => ({ default: m.AdminCustomersPage }))
+)
+const AdminStaffPage = lazy(() =>
+  import('@/pages/admin/AdminStaffPage').then((m) => ({ default: m.AdminStaffPage }))
 )
 const AdminReviewsPage = lazy(() =>
   import('@/pages/admin/AdminReviews').then((m) => ({ default: m.AdminReviewsPage }))
@@ -122,7 +128,9 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Static pages
+      // Static pages & About
+      { path: 'about', element: <S><AboutPage /></S> },
+      { path: 'pages/about', element: <S><AboutPage /></S> },
       { path: 'pages/:slug', element: <S><StaticPage /></S> },
 
       // 404
@@ -188,6 +196,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireRole roles={['ADMIN', 'ORDER_MANAGER']}>
             <S><AdminCustomersPage /></S>
+          </RequireRole>
+        ),
+      },
+      {
+        path: 'staff',
+        element: (
+          <RequireRole roles={['ADMIN']}>
+            <S><AdminStaffPage /></S>
           </RequireRole>
         ),
       },

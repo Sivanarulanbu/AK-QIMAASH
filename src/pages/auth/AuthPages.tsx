@@ -2,11 +2,10 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { loginSchema, registerSchema, type LoginFormData, type RegisterFormData } from '@/schemas'
-import { Input } from '@/components/ui/FormFields'
-import { Button } from '@/components/ui/Button'
 import { SEOHead } from '@/components/seo/SEOHead'
 
 // ─── Login Page ───────────────────────────────────────────────────────────────
@@ -18,7 +17,11 @@ export function LoginPage() {
   const from = (location.state as any)?.from?.pathname || '/account'
 
   const [error, setError] = useState<string | null>(null)
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
 
@@ -39,47 +42,79 @@ export function LoginPage() {
 
   return (
     <>
-      <SEOHead title="Sign In — AK QIMAASH" description="Sign in to your AK QIMAASH account." canonical="/auth/login" />
-      <AuthLayout title="Sign in" subtitle="Welcome back.">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <SEOHead title="Private Client Access — AK QIMAASH" description="Sign in to your AK QIMAASH client account." canonical="/auth/login" />
+      <AuthLayout
+        title="Private Client Access"
+        subtitle="Welcome back to AK QIMAASH. Enter your credentials to manage orders, personal sizing, and curated wishlists."
+      >
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3.5">
           {error && (
-            <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-sm text-error-dark">
+            <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
               {error}
             </div>
           )}
 
-          <Input
-            label="Email"
-            type="email"
-            autoComplete="email"
-            {...register('email')}
-            error={errors.email?.message}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            {...register('password')}
-            error={errors.password?.message}
-            required
-          />
-
-          <div className="flex justify-end">
-            <Link to="/auth/forgot-password" className="text-xs text-text-muted hover:text-text-primary underline underline-offset-2">
-              Forgot password?
-            </Link>
+          <div>
+            <label htmlFor="login-email" className="block text-[11px] font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1">
+              Email Address
+            </label>
+            <input
+              id="login-email"
+              type="email"
+              autoComplete="email"
+              {...register('email')}
+              placeholder="client@example.com"
+              style={{ outline: 'none' }}
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-3.5 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+            />
+            {errors.email && (
+              <p className="text-xs text-error mt-1 font-sans">{errors.email.message}</p>
+            )}
           </div>
 
-          <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
-            Sign In
-          </Button>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="login-password" className="text-[11px] font-sans uppercase tracking-[0.15em] text-brand-stone font-medium">
+                Password
+              </label>
+              <Link to="/auth/forgot-password" className="text-xs font-sans text-brand-stone hover:text-brand-black underline underline-offset-2">
+                Forgot password?
+              </Link>
+            </div>
+            <input
+              id="login-password"
+              type="password"
+              autoComplete="current-password"
+              {...register('password')}
+              placeholder="••••••••"
+              style={{ outline: 'none' }}
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-3.5 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+            />
+            {errors.password && (
+              <p className="text-xs text-error mt-1 font-sans">{errors.password.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3 sm:py-3.5 bg-[#1a1a1a] text-white text-xs uppercase tracking-[0.2em] font-sans font-semibold hover:bg-black hover:-translate-y-0.5 shadow-md hover:shadow-xl transition-all duration-300 rounded-xs flex items-center justify-center gap-2 mt-4 cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <span>Verifying Credentials...</span>
+            ) : (
+              <>
+                <span>Sign In to Account</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </>
+            )}
+          </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-text-muted">
-          New customer?{' '}
-          <Link to="/auth/register" className="text-text-primary font-medium hover:text-accent underline underline-offset-2">
-            Create an account
+        <p className="mt-4 sm:mt-5 text-center text-xs font-sans text-brand-stone">
+          New to AK QIMAASH?{' '}
+          <Link to="/auth/register" className="text-brand-black font-semibold hover:underline uppercase tracking-wider ml-1">
+            Create an Account
           </Link>
         </p>
       </AuthLayout>
@@ -94,7 +129,11 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   })
 
@@ -102,7 +141,7 @@ export function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
@@ -124,12 +163,15 @@ export function RegisterPage() {
 
   if (success) {
     return (
-      <AuthLayout title="Check your email" subtitle="">
-        <div className="text-center">
-          <p className="text-sm text-text-secondary mb-4">
-            We sent a confirmation link to your email address. Click the link to activate your account.
+      <AuthLayout title="Private Access Requested" subtitle="We have dispatched a verification link to your email.">
+        <div className="text-center py-4">
+          <p className="text-xs sm:text-sm font-sans text-brand-stone mb-6 leading-relaxed">
+            Please check your inbox to activate your client privileges and begin browsing curated editions.
           </p>
-          <Link to="/auth/login" className="btn-md btn-secondary">
+          <Link
+            to="/auth/login"
+            className="inline-flex items-center justify-center px-8 py-3.5 bg-brand-black text-white text-xs uppercase tracking-[0.2em] font-sans font-medium hover:bg-brand-charcoal transition-colors rounded-xs"
+          >
             Return to Sign In
           </Link>
         </div>
@@ -140,57 +182,103 @@ export function RegisterPage() {
   return (
     <>
       <SEOHead title="Create Account — AK QIMAASH" description="Create your AK QIMAASH account." canonical="/auth/register" />
-      <AuthLayout title="Create account" subtitle="Join to start shopping.">
+      <AuthLayout
+        title="Become a Client"
+        subtitle="Join our private membership to enjoy seasonal preview access, order archives, and Singapore concierge delivery."
+      >
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           {error && (
-            <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-sm text-error-dark">
+            <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
               {error}
             </div>
           )}
 
-          <Input
-            label="Full name"
-            type="text"
-            autoComplete="name"
-            {...register('full_name')}
-            error={errors.full_name?.message}
-            required
-          />
-          <Input
-            label="Email"
-            type="email"
-            autoComplete="email"
-            {...register('email')}
-            error={errors.email?.message}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            autoComplete="new-password"
-            {...register('password')}
-            error={errors.password?.message}
-            hint="Min. 8 characters, one uppercase, one number"
-            required
-          />
-          <Input
-            label="Confirm password"
-            type="password"
-            autoComplete="new-password"
-            {...register('confirm_password')}
-            error={errors.confirm_password?.message}
-            required
-          />
+          <div>
+            <label htmlFor="reg-name" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+              Full Name
+            </label>
+            <input
+              id="reg-name"
+              type="text"
+              autoComplete="name"
+              {...register('full_name')}
+              placeholder="e.g. Eleanor Vance"
+              style={{ outline: 'none' }}
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+            />
+            {errors.full_name && (
+              <p className="text-xs text-error mt-1 font-sans">{errors.full_name.message}</p>
+            )}
+          </div>
 
-          <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
-            Create Account
-          </Button>
+          <div>
+            <label htmlFor="reg-email" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+              Email Address
+            </label>
+            <input
+              id="reg-email"
+              type="email"
+              autoComplete="email"
+              {...register('email')}
+              placeholder="client@example.com"
+              style={{ outline: 'none' }}
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+            />
+            {errors.email && (
+              <p className="text-xs text-error mt-1 font-sans">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="reg-password" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+              Password
+            </label>
+            <input
+              id="reg-password"
+              type="password"
+              autoComplete="new-password"
+              {...register('password')}
+              placeholder="Min. 8 characters"
+              style={{ outline: 'none' }}
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+            />
+            {errors.password && (
+              <p className="text-xs text-error mt-1 font-sans">{errors.password.message}</p>
+            )}
+            <p className="text-[11px] text-brand-stone/80 mt-1 font-sans">Min. 8 characters, one uppercase, one number</p>
+          </div>
+
+          <div>
+            <label htmlFor="reg-confirm" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+              Confirm Password
+            </label>
+            <input
+              id="reg-confirm"
+              type="password"
+              autoComplete="new-password"
+              {...register('confirm_password')}
+              placeholder="Re-enter password"
+              style={{ outline: 'none' }}
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+            />
+            {errors.confirm_password && (
+              <p className="text-xs text-error mt-1 font-sans">{errors.confirm_password.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3.5 sm:py-4 bg-[#1a1a1a] text-white text-xs uppercase tracking-[0.2em] font-sans font-semibold hover:bg-black hover:-translate-y-0.5 shadow-md hover:shadow-xl transition-all duration-300 rounded-xs flex items-center justify-center gap-2 mt-6 cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting ? <span>Creating Account...</span> : <span>Join Private Client Program</span>}
+          </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-text-muted">
-          Already have an account?{' '}
-          <Link to="/auth/login" className="text-text-primary font-medium hover:text-accent underline underline-offset-2">
-            Sign in
+        <p className="mt-6 text-center text-xs font-sans text-brand-stone">
+          Already a client?{' '}
+          <Link to="/auth/login" className="text-brand-black font-semibold hover:underline uppercase tracking-wider ml-1">
+            Sign In
           </Link>
         </p>
       </AuthLayout>
@@ -203,7 +291,11 @@ export function RegisterPage() {
 export function ForgotPasswordPage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ email: string }>()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<{ email: string }>()
 
   const onSubmit = async (data: { email: string }) => {
     setError(null)
@@ -220,37 +312,58 @@ export function ForgotPasswordPage() {
   return (
     <>
       <SEOHead title="Reset Password — AK QIMAASH" description="Reset your AK QIMAASH account password." canonical="/auth/forgot-password" />
-      <AuthLayout title="Reset password" subtitle="Enter your email to receive a reset link.">
+      <AuthLayout
+        title="Account Recovery"
+        subtitle="Enter your email address and we will dispatch a secure link to reset your credentials."
+      >
         {sent ? (
-          <div className="text-center">
-            <p className="text-sm text-text-secondary mb-4">
+          <div className="text-center py-4">
+            <p className="text-xs sm:text-sm font-sans text-brand-stone mb-6 leading-relaxed">
               If an account exists for that email, you will receive a password reset link shortly.
             </p>
-            <Link to="/auth/login" className="btn-md btn-secondary">
+            <Link
+              to="/auth/login"
+              className="inline-flex items-center justify-center px-8 py-3.5 bg-brand-black text-white text-xs uppercase tracking-[0.2em] font-sans font-medium hover:bg-brand-charcoal transition-colors rounded-xs"
+            >
               Return to Sign In
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
             {error && (
-              <div role="alert" className="p-3 bg-error-light rounded text-sm text-error-dark">
+              <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
                 {error}
               </div>
             )}
-            <Input
-              label="Email"
-              type="email"
-              autoComplete="email"
-              {...register('email', { required: 'Email is required' })}
-              error={errors.email?.message}
-              required
-            />
-            <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isSubmitting}>
-              Send Reset Link
-            </Button>
-            <Link to="/auth/login" className="block text-center text-sm text-text-muted hover:text-text-primary">
-              Back to Sign In
-            </Link>
+            <div>
+              <label htmlFor="reset-email" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+                Email Address
+              </label>
+              <input
+                id="reset-email"
+                type="email"
+                autoComplete="email"
+                {...register('email', { required: 'Email is required' })}
+                placeholder="client@example.com"
+                style={{ outline: 'none' }}
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              />
+              {errors.email && (
+                <p className="text-xs text-error mt-1 font-sans">{errors.email.message}</p>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3.5 sm:py-4 bg-[#1a1a1a] text-white text-xs uppercase tracking-[0.2em] font-sans font-semibold hover:bg-black hover:-translate-y-0.5 shadow-md hover:shadow-xl transition-all duration-300 rounded-xs flex items-center justify-center gap-2 mt-6 cursor-pointer disabled:opacity-50"
+            >
+              {isSubmitting ? <span>Dispatching Link...</span> : <span>Send Reset Link</span>}
+            </button>
+            <div className="text-center pt-2">
+              <Link to="/auth/login" className="text-xs font-sans text-brand-stone hover:text-brand-black uppercase tracking-wider underline underline-offset-2">
+                Back to Sign In
+              </Link>
+            </div>
           </form>
         )}
       </AuthLayout>
@@ -258,7 +371,7 @@ export function ForgotPasswordPage() {
   )
 }
 
-// ─── Auth Layout ──────────────────────────────────────────────────────────────
+// ─── Prototype V1 Split-Screen Auth Layout ────────────────────────────────────
 
 function AuthLayout({
   title,
@@ -270,18 +383,60 @@ function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-[380px]">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-block mb-6" aria-label="AK QIMAASH">
-            <span className="font-editorial text-2xl font-medium tracking-tighter text-brand-black">
-              AK QIMAASH
-            </span>
-          </Link>
-          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-text-muted mt-1">{subtitle}</p>}
+    <div className="min-h-[calc(100vh-5rem)] flex flex-col lg:flex-row bg-[#FAF9F7]">
+      {/* Left 50%: Editorial Visual Section */}
+      <div className="relative w-full lg:w-1/2 min-h-[300px] sm:min-h-[380px] lg:min-h-[calc(100vh-5rem)] bg-brand-charcoal overflow-hidden flex flex-col justify-end p-8 sm:p-12 lg:p-16">
+        <img
+          src="/images/hero-banner.jpg"
+          alt="AK QIMAASH Editorial New Season"
+          className="absolute inset-0 w-full h-full object-cover object-[75%_center] lg:object-[68%_center]"
+        />
+        {/* Subtle luxury gradient overlay */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10 pointer-events-none"
+          aria-hidden="true"
+        />
+
+        {/* Editorial Content Overlay */}
+        <div className="relative z-10 max-w-lg text-white animate-fade-in">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-3.5 w-3.5 text-accent stroke-[1.5]" />
+            <p className="text-xs uppercase tracking-[0.3em] font-sans font-medium text-white/85">
+              Private Client Access
+            </p>
+          </div>
+          <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl uppercase font-light tracking-tight leading-[1.08] mb-4 text-white">
+            A Private World of Modest Luxury.
+          </h2>
+          <p className="font-sans text-xs sm:text-sm text-white/90 font-light leading-relaxed max-w-md">
+            Access seasonal previews, personalized wardrobe sizing archives, and complimentary Singapore concierge delivery.
+          </p>
         </div>
-        <div className="card p-6 shadow-sm">{children}</div>
+      </div>
+
+      {/* Right 50%: Client Access Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[#FAF9F7] my-auto">
+        <div className="w-full max-w-md my-auto">
+          {/* Header */}
+          <div className="mb-3.5 sm:mb-4">
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] font-sans font-medium text-brand-stone mb-1">
+              AK QIMAASH Atelier
+            </p>
+            <h1 className="font-editorial text-2xl sm:text-3xl lg:text-4xl text-brand-black uppercase font-medium tracking-tight">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="font-sans text-xs text-brand-stone font-light mt-1 leading-relaxed">
+                {subtitle}
+              </p>
+            )}
+          </div>
+
+          {/* Form Card */}
+          <div className="bg-white p-5 sm:p-7 rounded-xs border border-border/80 shadow-xs">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   )

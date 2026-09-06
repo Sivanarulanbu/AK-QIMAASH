@@ -1,16 +1,17 @@
 import { useState, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { SlidersHorizontal, X, ChevronDown, Check, ArrowUpDown } from 'lucide-react'
 import { useProducts, useCategories } from '@/features/products/useProducts'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
 import { Drawer } from '@/components/ui/Drawer'
-import { Button } from '@/components/ui/Button'
-import { Breadcrumb, Pagination } from '@/components/ui/Navigation'
+import { Pagination } from '@/components/ui/Navigation'
 import { SEOHead } from '@/components/seo/SEOHead'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/utils'
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const COLORS = ['Black', 'White', 'Taupe', 'Olive', 'Navy', 'Beige']
 const SORT_OPTIONS = [
   { value: 'newest', label: 'New Arrivals' },
   { value: 'price_asc', label: 'Price: Low to High' },
@@ -22,17 +23,20 @@ const PER_PAGE = 24
 export function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [mobileSortOpen, setMobileSortOpen] = useState(false)
 
   const category = searchParams.get('category') || undefined
   const sort = (searchParams.get('sort') || 'newest') as any
   const page = parseInt(searchParams.get('page') || '1', 10)
   const selectedSizes = searchParams.getAll('size')
   const selectedColors = searchParams.getAll('color')
+  const inStockOnly = searchParams.get('in_stock') === 'true'
 
   const { data, isLoading } = useProducts({
     category_slug: category,
     sizes: selectedSizes.length ? selectedSizes : undefined,
     colors: selectedColors.length ? selectedColors : undefined,
+    in_stock: inStockOnly || undefined,
     sort,
     page,
     per_page: PER_PAGE,
@@ -76,22 +80,9 @@ export function ShopPage() {
     setSearchParams(next)
   }
 
-  const hasActiveFilters = category || selectedSizes.length > 0 || selectedColors.length > 0
-
+  const hasActiveFilters = category || selectedSizes.length > 0 || selectedColors.length > 0 || inStockOnly
+  const totalCount = data?.total ?? 0
   const totalPages = data ? Math.ceil(data.total / PER_PAGE) : 0
-
-  const filterPanel = (
-    <FilterPanel
-      categories={categories || []}
-      selectedCategory={category}
-      selectedSizes={selectedSizes}
-      onCategoryChange={(slug) => updateParam('category', slug)}
-      onSizeToggle={(size) => toggleArrayParam('size', size)}
-      onClearAll={clearAllFilters}
-      hasActiveFilters={!!hasActiveFilters}
-    />
-  )
-
   const activeCategory = categories?.find((c) => c.slug === category)
 
   return (
@@ -100,42 +91,134 @@ export function ShopPage() {
         title={activeCategory ? `${activeCategory.name} — AK QIMAASH` : 'Shop All — AK QIMAASH'}
         description={
           activeCategory
-            ? `Shop ${activeCategory.name} at AK QIMAASH. Contemporary fashion for Singapore.`
-            : 'Browse the complete AK QIMAASH collection. Contemporary fashion for everyday Singapore living.'
+            ? `Shop ${activeCategory.name} at AK QIMAASH. Contemporary luxury fashion designed for Singapore.`
+            : 'Explore the complete AK QIMAASH collection. Modest luxury fashion crafted with quiet elegance.'
         }
         canonical={category ? `/shop?category=${category}` : '/shop'}
       />
 
-      <div className="container-main py-5">
-        <Breadcrumb
-          items={[
-            { label: 'Shop', href: '/shop' },
-            ...(activeCategory ? [{ label: activeCategory.name }] : []),
-          ]}
-          className="mb-5"
-        />
+      <div className="container-main py-8 sm:py-12">
+        {/* ── Editorial Page Title ── */}
+        <div className="text-center max-w-xl mx-auto mb-8">
+          <p className="editorial-subheading mb-2">The Collection</p>
+          <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl text-brand-black tracking-tight uppercase font-medium">
+            {activeCategory ? activeCategory.name : 'SHOP'}
+          </h1>
+          {activeCategory?.description && (
+            <p className="font-sans text-xs sm:text-sm text-text-muted mt-2 font-light max-w-md mx-auto">
+              {activeCategory.description}
+            </p>
+          )}
+        </div>
 
-        <div className="flex items-baseline justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-text-primary tracking-tight">
-              {activeCategory ? activeCategory.name : 'All Products'}
-            </h1>
-            {data && (
-              <p className="text-sm text-text-muted mt-1">
-                {data.total} {data.total === 1 ? 'product' : 'products'}
-              </p>
+        {/* ── Category Sub-Navigation Bar ── */}
+        <div className="flex items-center justify-center gap-6 sm:gap-10 border-b border-border/80 overflow-x-auto scrollbar-none pb-3 mb-8">
+          <button
+            onClick={() => updateParam('category', null)}
+            className={cn(
+              'text-xs uppercase tracking-[0.2em] font-sans whitespace-nowrap transition-colors pb-1 relative',
+              !category
+                ? 'text-brand-black font-semibold after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-[2px] after:bg-brand-black'
+                : 'text-text-muted hover:text-brand-black'
             )}
+          >
+            All Pieces
+          </button>
+          {categories?.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => updateParam('category', cat.slug)}
+              className={cn(
+                'text-xs uppercase tracking-[0.2em] font-sans whitespace-nowrap transition-colors pb-1 relative',
+                category === cat.slug
+                  ? 'text-brand-black font-semibold after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-[2px] after:bg-brand-black'
+                  : 'text-text-muted hover:text-brand-black'
+              )}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Desktop Horizontal Filter & Sort Bar ── */}
+        <div className="hidden lg:flex items-center justify-between py-4 border-b border-border/60 mb-8">
+          {/* Left: Horizontal filters */}
+          <div className="flex items-center gap-6">
+            <span className="text-xs uppercase tracking-[0.15em] font-sans font-medium text-text-muted">
+              Filter:
+            </span>
+
+            {/* Sizes */}
+            <div className="flex items-center gap-1.5">
+              {SIZES.map((size) => {
+                const isSelected = selectedSizes.includes(size)
+                return (
+                  <button
+                    key={size}
+                    onClick={() => toggleArrayParam('size', size)}
+                    className={cn(
+                      'px-2.5 py-1 text-xs font-sans rounded-xs transition-colors border',
+                      isSelected
+                        ? 'bg-brand-black text-white border-brand-black font-medium'
+                        : 'bg-transparent text-text-secondary border-border/80 hover:border-brand-black'
+                    )}
+                  >
+                    {size}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="h-4 w-[1px] bg-border/80" />
+
+            {/* Colors */}
+            <div className="flex items-center gap-2">
+              {COLORS.map((color) => {
+                const isSelected = selectedColors.includes(color)
+                return (
+                  <button
+                    key={color}
+                    onClick={() => toggleArrayParam('color', color)}
+                    className={cn(
+                      'text-xs font-sans px-2.5 py-1 rounded-xs border transition-colors',
+                      isSelected
+                        ? 'bg-brand-black text-white border-brand-black font-medium'
+                        : 'bg-transparent text-text-secondary border-border/80 hover:border-brand-black'
+                    )}
+                  >
+                    {color}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="h-4 w-[1px] bg-border/80" />
+
+            {/* In stock toggle */}
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-sans text-text-secondary select-none">
+              <input
+                type="checkbox"
+                checked={inStockOnly}
+                onChange={(e) => updateParam('in_stock', e.target.checked ? 'true' : null)}
+                className="w-3.5 h-3.5 accent-brand-black rounded-xs"
+              />
+              In Stock Only
+            </label>
           </div>
 
-          {/* Sort + Filter controls */}
-          <div className="flex items-center gap-2">
-            {/* Sort dropdown */}
-            <div className="relative hidden sm:block">
+          {/* Right: Piece Count + Sort */}
+          <div className="flex items-center gap-6">
+            <span className="text-xs font-sans text-text-muted tracking-wider">
+              {totalCount} {totalCount === 1 ? 'piece' : 'pieces'}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-sans uppercase tracking-wider text-text-muted font-medium">Sort:</span>
               <select
                 value={sort}
                 onChange={(e) => updateParam('sort', e.target.value)}
-                className="select-base pr-8 text-sm h-9"
-                aria-label="Sort products"
+                className="bg-transparent border-0 border-b border-border/80 text-xs font-sans font-medium text-brand-black py-1 pr-6 focus:ring-0 focus:outline-none cursor-pointer"
+                aria-label="Sort options"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -144,284 +227,273 @@ export function ShopPage() {
                 ))}
               </select>
             </div>
-
-            {/* Mobile filter button */}
-            <button
-              className="btn-md btn-secondary gap-2 lg:hidden"
-              onClick={() => setFilterDrawerOpen(true)}
-              aria-label="Open filters"
-            >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              Filters
-              {hasActiveFilters && (
-                <span className="w-5 h-5 bg-brand-black text-white text-xs rounded-full flex items-center justify-center">
-                  {(selectedSizes.length || 0) + (selectedColors.length || 0) + (category ? 1 : 0)}
-                </span>
-              )}
-            </button>
           </div>
         </div>
 
-        {/* Active filter pills */}
+        {/* ── Active Filter Tags (Desktop & Mobile) ── */}
         {hasActiveFilters && (
-          <div className="flex flex-wrap gap-2 mb-5" role="list" aria-label="Active filters">
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="text-xs uppercase font-sans tracking-wider text-text-muted">Active:</span>
             {activeCategory && (
-              <FilterPill
-                label={activeCategory.name}
-                onRemove={() => updateParam('category', null)}
-              />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80">
+                {activeCategory.name}
+                <button onClick={() => updateParam('category', null)} aria-label="Remove category filter">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
             )}
             {selectedSizes.map((size) => (
-              <FilterPill
+              <span
                 key={size}
-                label={`Size: ${size}`}
-                onRemove={() => toggleArrayParam('size', size)}
-              />
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80"
+              >
+                Size: {size}
+                <button onClick={() => toggleArrayParam('size', size)} aria-label={`Remove size ${size}`}>
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
             ))}
+            {selectedColors.map((color) => (
+              <span
+                key={color}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80"
+              >
+                {color}
+                <button onClick={() => toggleArrayParam('color', color)} aria-label={`Remove color ${color}`}>
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+            {inStockOnly && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80">
+                In Stock
+                <button onClick={() => updateParam('in_stock', null)} aria-label="Remove in stock filter">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
             <button
               onClick={clearAllFilters}
-              className="text-xs text-text-muted hover:text-text-primary underline underline-offset-2"
+              className="text-xs text-text-muted hover:text-brand-black underline underline-offset-4 ml-2"
             >
               Clear all
             </button>
           </div>
         )}
 
-        <div className="flex gap-8">
-          {/* Desktop sidebar */}
-          <aside className="hidden lg:block w-56 flex-shrink-0">
-            <div className="sticky top-24">
-              {filterPanel}
-            </div>
-          </aside>
+        {/* ── Sticky Mobile Filter / Sort Bar (< 1024px) ── */}
+        <div className="lg:hidden sticky top-[57px] z-20 -mx-4 px-4 py-3 bg-surface/95 backdrop-blur-md border-y border-border/80 flex items-center justify-between mb-6 shadow-xs">
+          <span className="text-xs font-sans tracking-wider text-text-muted">
+            {totalCount} {totalCount === 1 ? 'piece' : 'pieces'}
+          </span>
 
-          {/* Product grid */}
-          <div className="flex-1 min-w-0">
-            {/* Mobile sort */}
-            <div className="sm:hidden mb-4">
-              <select
-                value={sort}
-                onChange={(e) => updateParam('sort', e.target.value)}
-                className="select-base text-sm"
-                aria-label="Sort products"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFilterDrawerOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-sans uppercase tracking-wider font-medium border border-brand-black bg-white rounded-xs"
+              aria-label="Open filter drawer"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filter
+              {hasActiveFilters && (
+                <span className="w-4 h-4 bg-brand-black text-white text-[10px] rounded-full flex items-center justify-center -mr-1">
+                  {selectedSizes.length + selectedColors.length + (category ? 1 : 0) + (inStockOnly ? 1 : 0)}
+                </span>
+              )}
+            </button>
 
-            {isLoading ? (
-              <ProductGridSkeleton count={8} />
-            ) : data?.products.length === 0 ? (
-              <EmptyState onClearFilters={clearAllFilters} hasFilters={!!hasActiveFilters} />
-            ) : (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                  {data?.products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-
-                {totalPages > 1 && (
-                  <div className="mt-12">
-                    <Pagination
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={(p) => updateParam('page', String(p))}
-                    />
-                  </div>
-                )}
-              </>
-            )}
+            <button
+              onClick={() => setMobileSortOpen(!mobileSortOpen)}
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-sans uppercase tracking-wider font-medium border border-border bg-white rounded-xs"
+              aria-label="Toggle sort options"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+              Sort
+            </button>
           </div>
         </div>
+
+        {/* Mobile Sort Dropdown Popover */}
+        {mobileSortOpen && (
+          <div className="lg:hidden mb-6 p-4 bg-surface-raised border border-border rounded-md shadow-md animate-fade-in">
+            <p className="text-xs uppercase font-sans font-medium text-text-muted mb-2 tracking-wider">Sort by</p>
+            <div className="space-y-1">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    updateParam('sort', opt.value)
+                    setMobileSortOpen(false)
+                  }}
+                  className={cn(
+                    'w-full text-left py-2 px-3 text-xs font-sans rounded-xs flex items-center justify-between',
+                    sort === opt.value ? 'bg-brand-smoke text-brand-black font-semibold' : 'text-text-secondary'
+                  )}
+                >
+                  <span>{opt.label}</span>
+                  {sort === opt.value && <Check className="h-3.5 w-3.5 text-brand-black" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Product Grid ── */}
+        {isLoading ? (
+          <ProductGridSkeleton count={8} />
+        ) : data?.products.length === 0 ? (
+          <EmptyState
+            type="search"
+            title="NO PIECES MATCH YOUR FILTER"
+            description="Try adjusting your size, color, or category selection to find what you are looking for."
+            actionLabel="CLEAR FILTERS"
+            onAction={clearAllFilters}
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-12">
+              {data?.products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex justify-center">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={(p) => updateParam('page', String(p))}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Mobile filter drawer */}
+      {/* ── Mobile Filter Drawer ── */}
       <Drawer
         isOpen={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
-        title="Filter"
+        title="FILTERS"
         side="left"
-        width="w-[300px]"
+        width="w-[320px]"
       >
-        <div className="px-5 py-4">
-          {filterPanel}
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full mt-6"
-            onClick={() => setFilterDrawerOpen(false)}
-          >
-            Apply Filters
-          </Button>
+        <div className="flex flex-col h-full p-6 justify-between">
+          <div className="space-y-6 overflow-y-auto">
+            {/* Category */}
+            <div>
+              <p className="text-xs uppercase font-sans font-medium text-text-muted tracking-[0.2em] mb-3">
+                Category
+              </p>
+              <div className="space-y-1.5">
+                <button
+                  onClick={() => updateParam('category', null)}
+                  className={cn(
+                    'w-full text-left py-1 text-xs uppercase tracking-wider',
+                    !category ? 'font-semibold text-brand-black' : 'text-text-secondary hover:text-brand-black'
+                  )}
+                >
+                  All
+                </button>
+                {categories?.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => updateParam('category', cat.slug)}
+                    className={cn(
+                      'w-full text-left py-1 text-xs uppercase tracking-wider',
+                      category === cat.slug ? 'font-semibold text-brand-black' : 'text-text-secondary hover:text-brand-black'
+                    )}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Size */}
+            <div>
+              <p className="text-xs uppercase font-sans font-medium text-text-muted tracking-[0.2em] mb-3">
+                Size
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {SIZES.map((size) => {
+                  const isSelected = selectedSizes.includes(size)
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => toggleArrayParam('size', size)}
+                      className={cn(
+                        'w-10 h-10 text-xs font-sans rounded-xs border transition-colors flex items-center justify-center',
+                        isSelected
+                          ? 'bg-brand-black text-white border-brand-black font-semibold'
+                          : 'bg-transparent text-text-primary border-border hover:border-brand-black'
+                      )}
+                    >
+                      {size}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Color */}
+            <div>
+              <p className="text-xs uppercase font-sans font-medium text-text-muted tracking-[0.2em] mb-3">
+                Color
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {COLORS.map((color) => {
+                  const isSelected = selectedColors.includes(color)
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => toggleArrayParam('color', color)}
+                      className={cn(
+                        'px-3 py-1.5 text-xs font-sans rounded-xs border transition-colors',
+                        isSelected
+                          ? 'bg-brand-black text-white border-brand-black font-medium'
+                          : 'bg-transparent text-text-secondary border-border hover:border-brand-black'
+                      )}
+                    >
+                      {color}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* In stock */}
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer text-xs font-sans text-text-primary">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => updateParam('in_stock', e.target.checked ? 'true' : null)}
+                  className="w-4 h-4 accent-brand-black rounded-xs"
+                />
+                In Stock Only
+              </label>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="pt-6 border-t border-border flex gap-3">
+            <button
+              onClick={clearAllFilters}
+              className="flex-1 py-3 text-xs uppercase tracking-widest font-medium border border-border hover:border-brand-black transition-colors"
+            >
+              Reset
+            </button>
+            <button
+              onClick={() => setFilterDrawerOpen(false)}
+              className="flex-1 py-3 text-xs uppercase tracking-widest font-medium bg-brand-black text-white hover:bg-brand-charcoal transition-colors"
+            >
+              View Results
+            </button>
+          </div>
         </div>
       </Drawer>
     </>
-  )
-}
-
-function FilterPanel({
-  categories,
-  selectedCategory,
-  selectedSizes,
-  onCategoryChange,
-  onSizeToggle,
-  onClearAll,
-  hasActiveFilters,
-}: {
-  categories: any[]
-  selectedCategory: string | undefined
-  selectedSizes: string[]
-  onCategoryChange: (slug: string | null) => void
-  onSizeToggle: (size: string) => void
-  onClearAll: () => void
-  hasActiveFilters: boolean
-}) {
-  return (
-    <div className="space-y-6">
-      {hasActiveFilters && (
-        <button
-          onClick={onClearAll}
-          className="text-xs text-text-muted hover:text-text-primary underline underline-offset-2"
-        >
-          Clear all filters
-        </button>
-      )}
-
-      {/* Category filter */}
-      <FilterSection title="Category">
-        <div className="space-y-1.5">
-          <FilterOption
-            label="All"
-            isActive={!selectedCategory}
-            onClick={() => onCategoryChange(null)}
-          />
-          {categories.map((cat) => (
-            <FilterOption
-              key={cat.id}
-              label={cat.name}
-              isActive={selectedCategory === cat.slug}
-              onClick={() => onCategoryChange(cat.slug)}
-            />
-          ))}
-        </div>
-      </FilterSection>
-
-      {/* Size filter */}
-      <FilterSection title="Size">
-        <div className="flex flex-wrap gap-2">
-          {SIZES.map((size) => (
-            <button
-              key={size}
-              onClick={() => onSizeToggle(size)}
-              aria-pressed={selectedSizes.includes(size)}
-              className={cn(
-                'min-w-[36px] h-9 px-2.5 text-sm font-medium border rounded',
-                'transition-all duration-150',
-                selectedSizes.includes(size)
-                  ? 'border-brand-black bg-brand-black text-white'
-                  : 'border-border text-text-secondary hover:border-brand-black'
-              )}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-      </FilterSection>
-    </div>
-  )
-}
-
-function FilterSection({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  const [isOpen, setIsOpen] = useState(true)
-  return (
-    <div className="border-b border-border pb-6">
-      <button
-        className="flex items-center justify-between w-full mb-3"
-        onClick={() => setIsOpen((o) => !o)}
-        aria-expanded={isOpen}
-      >
-        <span className="text-sm font-semibold text-text-primary">{title}</span>
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4 text-text-muted" aria-hidden="true" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-text-muted" aria-hidden="true" />
-        )}
-      </button>
-      {isOpen && children}
-    </div>
-  )
-}
-
-function FilterOption({
-  label,
-  isActive,
-  onClick,
-}: {
-  label: string
-  isActive: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'block text-sm transition-colors duration-150 py-0.5',
-        isActive
-          ? 'text-text-primary font-medium'
-          : 'text-text-secondary hover:text-text-primary'
-      )}
-    >
-      {label}
-    </button>
-  )
-}
-
-function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-smoke
-                     text-xs font-medium text-text-secondary rounded" role="listitem">
-      {label}
-      <button
-        onClick={onRemove}
-        className="ml-0.5 hover:text-text-primary"
-        aria-label={`Remove ${label} filter`}
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </span>
-  )
-}
-
-function EmptyState({
-  onClearFilters,
-  hasFilters,
-}: {
-  onClearFilters: () => void
-  hasFilters: boolean
-}) {
-  return (
-    <div className="text-center py-20">
-      <p className="text-text-muted text-sm mb-4">
-        {hasFilters
-          ? 'No products match the selected filters.'
-          : 'No products available yet.'}
-      </p>
-      {hasFilters && (
-        <Button variant="secondary" size="md" onClick={onClearFilters}>
-          Clear filters
-        </Button>
-      )}
-    </div>
   )
 }

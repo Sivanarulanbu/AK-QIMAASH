@@ -39,10 +39,13 @@ const PERMISSIONS: Record<string, UserRole[]> = {
   // Customers
   'customers.read':       ['ADMIN', 'ORDER_MANAGER'],
 
-  // User roles management
+  // User roles & staff management
   'roles.read':           ['ADMIN'],
   'roles.assign':         ['ADMIN'],
   'roles.revoke':         ['ADMIN'],
+  'staff.read':           ['ADMIN'],
+  'staff.assign':         ['ADMIN'],
+  'staff.revoke':         ['ADMIN'],
 
   // Audit logs
   'audit.read':           ['ADMIN'],

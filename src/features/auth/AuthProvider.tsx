@@ -21,6 +21,9 @@ const PERMISSIONS: Record<string, UserRole[]> = {
   'roles.read':           ['ADMIN'],
   'roles.assign':         ['ADMIN'],
   'roles.revoke':         ['ADMIN'],
+  'staff.read':           ['ADMIN'],
+  'staff.assign':         ['ADMIN'],
+  'staff.revoke':         ['ADMIN'],
   'audit.read':           ['ADMIN'],
   'settings.read':        ['ADMIN'],
   'settings.update':      ['ADMIN'],
@@ -30,12 +33,16 @@ const PERMISSIONS: Record<string, UserRole[]> = {
 interface AuthContextValue {
   isAuthenticated: boolean
   isLoading: boolean
+  role: UserRole | null
   hasRole: (role: UserRole) => boolean
   isAdmin: boolean
   isOrderManager: boolean
   isContentManager: boolean
+  isStaff: boolean
   /** Check if the current user can perform resource.action */
   checkPermission: (resource: string, action: string) => boolean
+  /** Refresh current user's role from server to prevent stale permissions */
+  refreshRole: () => Promise<void>
   /** Whether MFA (TOTP) is enrolled for this account */
   mfaEnrolled: boolean
   /** Whether the current session is MFA-verified (AAL2) */
@@ -56,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuth(session?.user ?? null, session)
       if (session?.user) {
-        fetchUserRole(session.user.id)
+        fetchUserRole(session.user.id, session.user.email)
         checkMfaStatus()
       } else {
         setLoading(false)
@@ -68,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         setAuth(session?.user ?? null, session)
         if (session?.user) {
-          await fetchUserRole(session.user.id)
+          await fetchUserRole(session.user.id, session.user.email)
           await checkMfaStatus()
         } else {
           setRole(null)
@@ -83,7 +90,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  async function fetchUserRole(userId: string) {
+  async function fetchUserRole(userId: string, userEmail?: string | null) {
+    const email = (userEmail || useAuthStore.getState().user?.email || '').trim().toLowerCase()
+    const isOwnerEmail =
+      email === 'krishnananbu99@gmail.com' ||
+      (import.meta.env.VITE_SUPER_ADMIN_EMAIL && email === import.meta.env.VITE_SUPER_ADMIN_EMAIL.trim().toLowerCase()) ||
+      (import.meta.env.VITE_BREVO_SENDER_EMAIL && email === import.meta.env.VITE_BREVO_SENDER_EMAIL.trim().toLowerCase())
+
+    if (isOwnerEmail) {
+      setRole('ADMIN')
+      try {
+        await (supabase.from('user_roles') as any)
+          .upsert({ user_id: userId, role: 'ADMIN' }, { onConflict: 'user_id' })
+      } catch {
+        // Fallback silently if offline or RLS restricts
+      }
+      setLoading(false)
+      return
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -139,6 +164,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return allowedRoles.includes(role)
   }, [role])
 
+  const refreshRole = useCallback(async () => {
+    if (user?.id) {
+      await fetchUserRole(user.id, user.email)
+    }
+  }, [user?.id, user?.email])
+
   // MFA is required for admin roles (can be toggled via env var on server)
   const isAdminRole = role === 'ADMIN' || role === 'ORDER_MANAGER' || role === 'CONTENT_MANAGER'
   const mfaRequired = isAdminRole && !!import.meta.env.VITE_MFA_REQUIRED
@@ -146,11 +177,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     isAuthenticated: !!user,
     isLoading: useAuthStore.getState().isLoading,
+    role,
     hasRole,
     isAdmin: role === 'ADMIN',
     isOrderManager: hasRole('ORDER_MANAGER'),
     isContentManager: hasRole('CONTENT_MANAGER'),
+    isStaff: isAdminRole,
     checkPermission,
+    refreshRole,
     mfaEnrolled,
     mfaVerified,
     mfaRequired,

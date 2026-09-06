@@ -10,6 +10,7 @@ const shopLinks = [
 ]
 
 const helpLinks = [
+  { to: '/pages/about', label: 'Our Story & Philosophy' },
   { to: '/pages/shipping', label: 'Shipping & Delivery' },
   { to: '/pages/returns', label: 'Returns & Exchanges' },
   { to: '/pages/sizing', label: 'Size Guide' },

@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductFormData } from '@/schemas'
 import { slugify } from '@/utils'
+import { Can } from '@/features/auth/PermissionGate'
 
 const PER_PAGE = 20
 
@@ -104,13 +105,16 @@ export function AdminProductsPage() {
                           >
                             <Edit className="h-3.5 w-3.5" />
                           </Link>
-                          <button
-                            onClick={() => handleArchive(product.id, product.name)}
-                            className="btn-icon-sm btn-ghost text-text-muted hover:text-error"
-                            aria-label={`Archive ${product.name}`}
-                          >
-                            <Archive className="h-3.5 w-3.5" />
-                          </button>
+                          <Can resource="products" action="delete">
+                            <button
+                              onClick={() => handleArchive(product.id, product.name)}
+                              className="btn-icon-sm btn-ghost text-text-muted hover:text-error"
+                              aria-label={`Archive ${product.name}`}
+                              title="Archive product"
+                            >
+                              <Archive className="h-3.5 w-3.5" />
+                            </button>
+                          </Can>
                         </div>
                       </td>
                     </tr>

@@ -52,6 +52,12 @@ const ALL_NAV_ITEMS: AdminNavItem[] = [
     allowedRoles: ['ADMIN', 'ORDER_MANAGER'],
   },
   {
+    to: '/admin/staff',
+    label: 'Team & Roles',
+    icon: ShieldCheck,
+    allowedRoles: ['ADMIN'],
+  },
+  {
     to: '/admin/reviews',
     label: 'Reviews',
     icon: Star,

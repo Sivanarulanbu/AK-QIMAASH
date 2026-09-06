@@ -10,6 +10,7 @@ import { Pagination } from '@/components/ui/Navigation'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { formatPrice, COMMERCE_CONFIG } from '@/lib/commerce'
 import { formatDate, formatDateTime } from '@/utils'
+import { Can } from '@/features/auth/PermissionGate'
 import type { Database } from '@/types/database'
 
 type OrderStatus = Database['public']['Enums']['order_status']
@@ -113,15 +114,17 @@ export function AdminOrdersPage() {
                           <Link to={`/admin/orders/${order.id}`} className="text-xs text-accent hover:underline">
                             View
                           </Link>
-                          <button
-                            onClick={() => {
-                              setSelectedOrderId(order.id)
-                              setStatusModal(true)
-                            }}
-                            className="text-xs text-text-muted hover:text-text-primary"
-                          >
-                            Update
-                          </button>
+                          <Can resource="orders" action="update_status">
+                            <button
+                              onClick={() => {
+                                setSelectedOrderId(order.id)
+                                setStatusModal(true)
+                              }}
+                              className="text-xs text-text-muted hover:text-text-primary"
+                            >
+                              Update
+                            </button>
+                          </Can>
                         </div>
                       </td>
                     </tr>
