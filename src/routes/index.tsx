@@ -35,6 +35,10 @@ const AboutPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 )
+const ShowcasePage = lazy(() =>
+  import('@/pages/showcase/ShowcasePage').then((m) => ({ default: m.ShowcasePage }))
+)
+
 
 // MFA Auth
 const MfaSetupPage = lazy(() =>
@@ -132,6 +136,10 @@ export const router = createBrowserRouter([
       { path: 'about', element: <S><AboutPage /></S> },
       { path: 'pages/about', element: <S><AboutPage /></S> },
       { path: 'pages/:slug', element: <S><StaticPage /></S> },
+
+      // Responsive Design Showcase
+      { path: 'showcase', element: <S><ShowcasePage /></S> },
+      { path: 'design-showcase', element: <S><ShowcasePage /></S> },
 
       // 404
       { path: '*', element: <S><NotFoundPage /></S> },

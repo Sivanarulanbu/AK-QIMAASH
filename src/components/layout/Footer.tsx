@@ -22,6 +22,7 @@ const legalLinks = [
   { to: '/pages/privacy', label: 'Privacy Policy' },
   { to: '/pages/terms', label: 'Terms of Service' },
   { to: '/pages/cookies', label: 'Cookie Policy' },
+  { to: '/showcase', label: 'Design Showcase' },
 ]
 
 export function Footer() {
