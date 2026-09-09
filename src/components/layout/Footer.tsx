@@ -36,10 +36,15 @@ export function Footer() {
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="inline-block mb-4" aria-label="AK QIMAASH Home">
-              <span className="font-editorial font-medium text-xl tracking-tighter text-white">
-                AK QIMAASH
-              </span>
+              <img
+                src="/images/logo-horizontal-white.png"
+                alt="AK QIMAASH"
+                className="h-8 sm:h-9 w-auto object-contain"
+              />
             </Link>
+            <p className="text-[9px] tracking-[0.25em] uppercase text-brand-stone font-medium mb-3">
+              Elegance in Every Thread
+            </p>
             <p className="text-sm text-brand-silver leading-relaxed max-w-xs">
               Contemporary fashion for everyday life. Designed in Singapore, made to last.
             </p>
@@ -53,10 +58,10 @@ export function Footer() {
 
           {/* Shop */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-caps text-brand-silver mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-caps text-brand-silver mb-2.5">
               Shop
             </h3>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {shopLinks.map((link) => (
                 <li key={link.to}>
                   <Link
@@ -72,10 +77,10 @@ export function Footer() {
 
           {/* Help */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-caps text-brand-silver mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-caps text-brand-silver mb-2.5">
               Support
             </h3>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {helpLinks.map((link) => (
                 <li key={link.to}>
                   <Link
@@ -91,10 +96,10 @@ export function Footer() {
 
           {/* Delivery */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-caps text-brand-silver mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-caps text-brand-silver mb-2.5">
               Delivery
             </h3>
-            <div className="space-y-3 text-sm text-brand-silver">
+            <div className="space-y-2 text-sm text-brand-silver">
               <p>Singapore only</p>
               <p>2–4 business days</p>
               <p>Free above $100</p>

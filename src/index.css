@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design Tokens & CSS Variables ──────────────────────────────────────── */
+:root {
+  --surface-2: #F5F4F0;
+  --text-primary: #0E0E0E;
+  --border: #E2E2E2;
+  --text-accent: #B05C3A;
+  --radius: 4px;
+}
+
 /* ─── Base Reset & Defaults ──────────────────────────────────────────────── */
 @layer base {
   *,

@@ -34,6 +34,13 @@ describe('Backend Data Contracts & Validation Schemas', () => {
       expect(sgAddressSchema.safeParse({ ...validAddress, phone: '98765432' }).success).toBe(true)
     })
 
+    it('gracefully normalizes formatted numbers with spaces, hyphens, and prefixes (Postel\'s Law)', () => {
+      expect(sgAddressSchema.safeParse({ ...validAddress, phone: '9123 4567' }).success).toBe(true)
+      expect(sgAddressSchema.safeParse({ ...validAddress, phone: '+65 9123-4567' }).success).toBe(true)
+      expect(sgAddressSchema.safeParse({ ...validAddress, phone: '(65) 9123 4567' }).success).toBe(true)
+      expect(sgAddressSchema.safeParse({ ...validAddress, phone: '8123-4567' }).success).toBe(true)
+    })
+
     it('rejects invalid Singapore phone numbers', () => {
       // Starting with invalid prefixes or wrong length
       expect(sgAddressSchema.safeParse({ ...validAddress, phone: '71234567' }).success).toBe(false)

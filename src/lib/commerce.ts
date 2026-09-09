@@ -48,9 +48,66 @@ export const COMMERCE_CONFIG = {
     DELIVERED: [],
     CANCELLED: [],
   } as const,
+
+  /** Cash on Delivery (COD) Risk Controls & Anti-Abuse Thresholds */
+  COD_RULES: {
+    /** Maximum active unfulfilled COD orders allowed per customer */
+    MAX_ACTIVE_PENDING_ORDERS: 3,
+    /** Maximum single COD order total in SGD cents ($1,500) */
+    MAX_ORDER_TOTAL_CENTS: 150000,
+    /** Maximum cancelled orders in past 30 days before pausing COD */
+    MAX_30DAY_CANCELLATIONS: 2,
+  },
 } as const
 
 export type OrderStatus = (typeof COMMERCE_CONFIG.ORDER_STATUSES)[number] | 'CANCELLED'
+
+/**
+ * Validates whether transitioning from currentStatus to nextStatus is permitted by the state machine.
+ */
+export function isValidStatusTransition(
+  currentStatus: OrderStatus,
+  nextStatus: OrderStatus
+): boolean {
+  if (currentStatus === nextStatus) return false
+  const allowed = COMMERCE_CONFIG.STATUS_TRANSITIONS[currentStatus]
+  return allowed ? (allowed as readonly string[]).includes(nextStatus) : false
+}
+
+/**
+ * Validates whether a customer meets Cash on Delivery (COD) order eligibility rules.
+ */
+export function validateCodEligibility(params: {
+  pendingCodOrdersCount: number
+  recentCancelledCount: number
+  orderSubtotalCents: number
+}): { eligible: boolean; reason?: string; code?: string } {
+  if (params.pendingCodOrdersCount >= COMMERCE_CONFIG.COD_RULES.MAX_ACTIVE_PENDING_ORDERS) {
+    return {
+      eligible: false,
+      code: 'COD_LIMIT_EXCEEDED',
+      reason: `You have ${params.pendingCodOrdersCount} active Cash on Delivery orders in transit. Please settle existing orders before placing new ones.`,
+    }
+  }
+
+  if (params.recentCancelledCount >= COMMERCE_CONFIG.COD_RULES.MAX_30DAY_CANCELLATIONS) {
+    return {
+      eligible: false,
+      code: 'COD_RESTRICTED',
+      reason: 'Cash on Delivery is temporarily paused due to previous order cancellations. Please contact atelier support at orders@akqimaash.sg.',
+    }
+  }
+
+  if (params.orderSubtotalCents > COMMERCE_CONFIG.COD_RULES.MAX_ORDER_TOTAL_CENTS) {
+    return {
+      eligible: false,
+      code: 'COD_MAX_AMOUNT_EXCEEDED',
+      reason: `Cash on Delivery orders cannot exceed ${formatPrice(COMMERCE_CONFIG.COD_RULES.MAX_ORDER_TOTAL_CENTS)}. For bespoke orders, contact atelier support.`,
+    }
+  }
+
+  return { eligible: true }
+}
 
 /**
  * Format a SGD amount from cents to a display string.
@@ -96,3 +153,4 @@ export function calculateOrderTotals(subtotalCents: number) {
 export function isValidSGPostalCode(code: string): boolean {
   return COMMERCE_CONFIG.POSTAL_CODE_REGEX.test(code)
 }
+

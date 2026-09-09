@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { Heart, Minus, Plus, ShieldCheck, Truck, RotateCcw, ChevronDown, ChevronUp, Star, Check, X } from 'lucide-react'
 import { useProduct, useProducts } from '@/features/products/useProducts'
@@ -54,7 +54,7 @@ export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { data: product, isLoading, error } = useProduct(slug!)
   const { isInWishlist, toggleProduct } = useWishlistStore()
-  const { addItem } = useCartStore()
+  const { addItem, openCart } = useCartStore()
   const { toast } = useToast()
 
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
@@ -62,9 +62,9 @@ export function ProductDetailPage() {
   const [addedFeedback, setAddedFeedback] = useState(false)
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
-
-  // Local reviews state
   const [reviews, setReviews] = useState<ReviewItem[]>(DEFAULT_REVIEWS.default)
+  const ctaRef = useRef<HTMLDivElement>(null)
+  const [showStickyBar, setShowStickyBar] = useState(false)
   const [newRating, setNewRating] = useState(5)
   const [newReviewer, setNewReviewer] = useState('')
   const [newTitle, setNewTitle] = useState('')
@@ -85,6 +85,21 @@ export function ProductDetailPage() {
       setSelectedVariant(defaultVariant)
     }
   }, [product?.id])
+
+  useEffect(() => {
+    const el = ctaRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   if (isLoading) {
     return (
@@ -125,6 +140,7 @@ export function ProductDetailPage() {
       quantity,
     })
     setAddedFeedback(true)
+    openCart()
     toast({
       title: 'Added to Bag',
       description: `${product.name} — Size ${selectedVariant.size || 'One Size'} (${quantity})`,
@@ -138,8 +154,7 @@ export function ProductDetailPage() {
     if (!isWishlisted) {
       toast({
         title: 'Saved to Wishlist',
-        description: product.name,
-        variant: 'default',
+        description: `${product.name} added to your wishlist.`,
       })
     }
   }
@@ -245,9 +260,14 @@ export function ProductDetailPage() {
                 {formatPrice(displayPrice)}
               </span>
               {comparePrice && comparePrice > displayPrice && (
-                <span className="text-sm font-sans text-text-muted line-through">
-                  {formatPrice(comparePrice)}
-                </span>
+                <>
+                  <span className="text-sm font-sans text-text-muted line-through">
+                    {formatPrice(comparePrice)}
+                  </span>
+                  <span className="px-2 py-0.5 bg-accent text-white text-[10px] font-sans font-semibold uppercase tracking-wider rounded-xs shadow-xs">
+                    Save {Math.round(((comparePrice - displayPrice) / comparePrice) * 100)}%
+                  </span>
+                </>
               )}
               <span className="text-xs font-sans text-text-muted">Includes 9% Singapore GST</span>
             </div>
@@ -279,32 +299,32 @@ export function ProductDetailPage() {
                 selectedVariantId={selectedVariant?.id ?? null}
                 onSelect={setSelectedVariant}
               />
+
+              {/* Stock status indicator — tightly grouped with selected variant */}
+              {selectedVariant && (
+                <div className="mt-3 flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'text-xs font-sans tracking-wide uppercase',
+                      inStock
+                        ? selectedVariant.stock_quantity <= 3
+                          ? 'text-amber-800'
+                          : 'text-text-muted'
+                        : 'text-rose-700'
+                    )}
+                  >
+                    {inStock
+                      ? selectedVariant.stock_quantity <= 3
+                        ? `Low stock — Only ${selectedVariant.stock_quantity} pieces available`
+                        : 'In Stock & Ready for Delivery'
+                      : 'Currently Sold Out'}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Stock status indicator */}
-            {selectedVariant && (
-              <div className="mb-6">
-                <span
-                  className={cn(
-                    'text-xs font-sans tracking-wide uppercase',
-                    inStock
-                      ? selectedVariant.stock_quantity <= 3
-                        ? 'text-amber-800'
-                        : 'text-text-muted'
-                      : 'text-rose-700'
-                  )}
-                >
-                  {inStock
-                    ? selectedVariant.stock_quantity <= 3
-                      ? `Low stock — Only ${selectedVariant.stock_quantity} pieces available`
-                      : 'In Stock & Ready for Delivery'
-                    : 'Currently Sold Out'}
-                </span>
-              </div>
-            )}
-
             {/* Quantity Selector + Add to Bag + Wishlist */}
-            <div className="space-y-4 mb-8">
+            <div ref={ctaRef} className="space-y-4 mb-8">
               <div className="flex items-center gap-3">
                 {/* Quantity Control */}
                 <div className="flex items-center border border-border h-12 rounded-xs bg-surface-raised">
@@ -632,6 +652,51 @@ export function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Mobile Sticky Add to Bag Bar (Jakob's Law) */}
+      <div
+        className={cn(
+          'fixed bottom-16 inset-x-0 z-30 bg-surface/95 backdrop-blur-md border-t border-border/80 px-4 py-2.5 shadow-lg md:hidden transition-all duration-300 ease-in-out',
+          showStickyBar ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+        )}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {product.primary_image && (
+              <img
+                src={product.primary_image}
+                alt={product.name}
+                className="w-10 h-10 object-cover rounded-xs border border-border/80 flex-shrink-0"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-xs font-sans font-medium text-brand-black truncate">
+                {product.name}
+              </p>
+              <div className="flex items-center gap-2 text-[11px] font-sans text-text-muted">
+                <span>{formatPrice(displayPrice)}</span>
+                {selectedVariant && <span>&middot; Size {selectedVariant.size || 'OS'}</span>}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={!selectedVariant || !inStock}
+            className={cn(
+              'h-10 px-5 text-xs font-sans uppercase tracking-wider font-medium rounded-xs flex-shrink-0 transition-colors flex items-center justify-center cursor-pointer',
+              addedFeedback
+                ? 'bg-emerald-800 text-white'
+                : !selectedVariant || !inStock
+                ? 'bg-brand-smoke text-text-disabled cursor-not-allowed'
+                : 'bg-brand-black text-white hover:bg-brand-charcoal'
+            )}
+          >
+            {addedFeedback ? 'Added ✓' : !selectedVariant ? 'Select Size' : !inStock ? 'Sold Out' : 'Add to Bag'}
+          </button>
+        </div>
+      </div>
     </>
   )
 }

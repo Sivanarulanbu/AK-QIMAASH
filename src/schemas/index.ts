@@ -56,12 +56,28 @@ export type ProfileFormData = z.infer<typeof profileSchema>
 
 // ─── Address Schemas ──────────────────────────────────────────────────────────
 
+export const normalizeSGPhone = (val: unknown): string => {
+  if (typeof val !== 'string') return ''
+  const clean = val.trim().replace(/[\s\-\(\)\.]/g, '')
+  if (/^[89][0-9]{7}$/.test(clean)) {
+    return `+65${clean}`
+  }
+  if (/^65[89][0-9]{7}$/.test(clean)) {
+    return `+${clean}`
+  }
+  return clean
+}
+
 export const sgAddressSchema = z.object({
   label: z.string().max(50).optional().or(z.literal('')),
   recipient_name: z.string().min(2, 'Recipient name is required').max(100),
-  phone: z
-    .string()
-    .regex(/^\+?65[0-9]{8}$|^[89][0-9]{7}$/, 'Please enter a valid Singapore phone number'),
+  email: z.string().email('Please enter a valid email address').optional().or(z.literal('')),
+  phone: z.preprocess(
+    normalizeSGPhone,
+    z
+      .string()
+      .regex(/^\+65[89][0-9]{7}$/, 'Please enter a valid Singapore phone number (e.g. 9123 4567)')
+  ),
   block_building: z.string().max(100).optional().or(z.literal('')),
   street: z.string().min(3, 'Street address is required').max(200),
   unit_number: z.string().max(20).optional().or(z.literal('')),

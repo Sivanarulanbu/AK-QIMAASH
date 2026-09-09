@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { loginSchema, registerSchema, type LoginFormData, type RegisterFormData } from '@/schemas'
@@ -17,6 +17,7 @@ export function LoginPage() {
   const from = (location.state as any)?.from?.pathname || '/account'
 
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
   const {
     register,
     handleSubmit,
@@ -47,7 +48,7 @@ export function LoginPage() {
         title="Private Client Access"
         subtitle="Welcome back to AK QIMAASH. Enter your credentials to manage orders, personal sizing, and curated wishlists."
       >
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3.5">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5 sm:space-y-6">
           {error && (
             <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
               {error}
@@ -73,23 +74,33 @@ export function LoginPage() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-2">
               <label htmlFor="login-password" className="text-[11px] font-sans uppercase tracking-[0.15em] text-brand-stone font-medium">
                 Password
               </label>
-              <Link to="/auth/forgot-password" className="text-xs font-sans text-brand-stone hover:text-brand-black underline underline-offset-2">
+              <Link to="/auth/forgot-password" className="text-xs font-sans text-brand-stone hover:text-brand-black underline underline-offset-4 py-0.5">
                 Forgot password?
               </Link>
             </div>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              {...register('password')}
-              placeholder="••••••••"
-              style={{ outline: 'none' }}
-              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-3.5 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
-            />
+            <div className="relative">
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                {...register('password')}
+                placeholder="••••••••"
+                style={{ outline: 'none' }}
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-3.5 pr-10 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-black transition-colors p-1"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4 stroke-[1.5]" /> : <Eye className="h-4 w-4 stroke-[1.5]" />}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-error mt-1 font-sans">{errors.password.message}</p>
             )}
@@ -128,6 +139,8 @@ export function RegisterPage() {
   const user = useAuthStore((s) => s.user)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const {
     register,
@@ -186,7 +199,7 @@ export function RegisterPage() {
         title="Become a Client"
         subtitle="Join our private membership to enjoy seasonal preview access, order archives, and Singapore concierge delivery."
       >
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5 sm:space-y-6">
           {error && (
             <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
               {error}
@@ -233,15 +246,25 @@ export function RegisterPage() {
             <label htmlFor="reg-password" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
               Password
             </label>
-            <input
-              id="reg-password"
-              type="password"
-              autoComplete="new-password"
-              {...register('password')}
-              placeholder="Min. 8 characters"
-              style={{ outline: 'none' }}
-              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
-            />
+            <div className="relative">
+              <input
+                id="reg-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                {...register('password')}
+                placeholder="Min. 8 characters"
+                style={{ outline: 'none' }}
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 pr-11 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-black transition-colors p-1"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4 stroke-[1.5]" /> : <Eye className="h-4 w-4 stroke-[1.5]" />}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-error mt-1 font-sans">{errors.password.message}</p>
             )}
@@ -252,15 +275,25 @@ export function RegisterPage() {
             <label htmlFor="reg-confirm" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
               Confirm Password
             </label>
-            <input
-              id="reg-confirm"
-              type="password"
-              autoComplete="new-password"
-              {...register('confirm_password')}
-              placeholder="Re-enter password"
-              style={{ outline: 'none' }}
-              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
-            />
+            <div className="relative">
+              <input
+                id="reg-confirm"
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                {...register('confirm_password')}
+                placeholder="Re-enter password"
+                style={{ outline: 'none' }}
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 pr-11 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-black transition-colors p-1"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4 stroke-[1.5]" /> : <Eye className="h-4 w-4 stroke-[1.5]" />}
+              </button>
+            </div>
             {errors.confirm_password && (
               <p className="text-xs text-error mt-1 font-sans">{errors.confirm_password.message}</p>
             )}
@@ -329,7 +362,7 @@ export function ForgotPasswordPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5 sm:space-y-6">
             {error && (
               <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
                 {error}

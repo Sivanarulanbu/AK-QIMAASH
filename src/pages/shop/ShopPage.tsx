@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { SlidersHorizontal, X, ChevronDown, Check, ArrowUpDown } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Menu, X, ChevronDown } from 'lucide-react'
 import { useProducts, useCategories } from '@/features/products/useProducts'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
-import { Drawer } from '@/components/ui/Drawer'
 import { Pagination } from '@/components/ui/Navigation'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -18,12 +17,28 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Price: High to Low' },
   { value: 'name_asc', label: 'Name: A–Z' },
 ]
+
+export const PRICE_RANGES = [
+  { label: 'All', id: 'all', min: undefined, max: undefined },
+  { label: '< $150', id: 'under-150', min: 0, max: 15000 },
+  { label: '$150 – $250', id: '150-250', min: 15000, max: 25000 },
+  { label: '$250 – $350', id: '250-350', min: 25000, max: 35000 },
+  { label: '$350+', id: 'over-350', min: 35000, max: undefined },
+]
+
 const PER_PAGE = 24
 
 export function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
-  const [mobileSortOpen, setMobileSortOpen] = useState(false)
+  // Persistent sidebar stays open by default on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  // Collapsible filter groups state
+  const [categoryOpen, setCategoryOpen] = useState(true)
+  const [sizeOpen, setSizeOpen] = useState(true)
+  const [colorOpen, setColorOpen] = useState(true)
+  const [priceOpen, setPriceOpen] = useState(true)
+  const [availabilityOpen, setAvailabilityOpen] = useState(true)
 
   const category = searchParams.get('category') || undefined
   const sort = (searchParams.get('sort') || 'newest') as any
@@ -31,11 +46,21 @@ export function ShopPage() {
   const selectedSizes = searchParams.getAll('size')
   const selectedColors = searchParams.getAll('color')
   const inStockOnly = searchParams.get('in_stock') === 'true'
+  const priceRangeId = searchParams.get('price') || 'all'
+  const selectedPriceRange = PRICE_RANGES.find((r) => r.id === priceRangeId) || PRICE_RANGES[0]
+
+  const maxPriceParam = searchParams.get('max_price')
+  const [sliderMaxPrice, setSliderMaxPrice] = useState<number>(() =>
+    maxPriceParam ? parseInt(maxPriceParam, 10) : 400
+  )
+  const customMaxPriceCents = maxPriceParam ? parseInt(maxPriceParam, 10) * 100 : undefined
 
   const { data, isLoading } = useProducts({
     category_slug: category,
     sizes: selectedSizes.length ? selectedSizes : undefined,
     colors: selectedColors.length ? selectedColors : undefined,
+    min_price_cents: selectedPriceRange.min,
+    max_price_cents: customMaxPriceCents ?? selectedPriceRange.max,
     in_stock: inStockOnly || undefined,
     sort,
     page,
@@ -78,12 +103,214 @@ export function ShopPage() {
     const next = new URLSearchParams()
     if (sort !== 'newest') next.set('sort', sort)
     setSearchParams(next)
+    setSliderMaxPrice(400)
   }
 
-  const hasActiveFilters = category || selectedSizes.length > 0 || selectedColors.length > 0 || inStockOnly
+  const hasActiveFilters =
+    Boolean(category) ||
+    selectedSizes.length > 0 ||
+    selectedColors.length > 0 ||
+    inStockOnly ||
+    priceRangeId !== 'all' ||
+    Boolean(maxPriceParam)
+
   const totalCount = data?.total ?? 0
   const totalPages = data ? Math.ceil(data.total / PER_PAGE) : 0
   const activeCategory = categories?.find((c) => c.slug === category)
+
+  // ── Render Filter Groups (shared between desktop sidebar and mobile drawer) ──
+  const renderFilterGroups = () => (
+    <div className="space-y-1">
+      {/* 1. Category */}
+      <FilterGroup
+        title="Category"
+        isOpen={categoryOpen}
+        onToggle={() => setCategoryOpen(!categoryOpen)}
+        badgeCount={category ? 1 : 0}
+      >
+        <div className="space-y-1 pt-1">
+          <label className="flex items-center gap-2.5 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1">
+            <input
+              type="checkbox"
+              checked={!category}
+              onChange={() => updateParam('category', null)}
+              className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+            />
+            <span>All Pieces</span>
+          </label>
+          {categories?.map((cat) => (
+            <label
+              key={cat.id}
+              className="flex items-center justify-between text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
+            >
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={category === cat.slug}
+                  onChange={() => updateParam('category', category === cat.slug ? null : cat.slug)}
+                  className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+                />
+                <span>{cat.name}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </FilterGroup>
+
+      {/* 2. Size */}
+      <FilterGroup
+        title="Size"
+        isOpen={sizeOpen}
+        onToggle={() => setSizeOpen(!sizeOpen)}
+        badgeCount={selectedSizes.length}
+      >
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          {SIZES.map((size) => {
+            const isSelected = selectedSizes.includes(size)
+            return (
+              <label
+                key={size}
+                className="flex items-center gap-2 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleArrayParam('size', size)}
+                  className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+                />
+                <span>{size}</span>
+              </label>
+            )
+          })}
+        </div>
+      </FilterGroup>
+
+      {/* 3. Color */}
+      <FilterGroup
+        title="Color"
+        isOpen={colorOpen}
+        onToggle={() => setColorOpen(!colorOpen)}
+        badgeCount={selectedColors.length}
+      >
+        <div className="space-y-1 pt-1">
+          {COLORS.map((color) => {
+            const isSelected = selectedColors.includes(color)
+            const colorHex =
+              color.toLowerCase() === 'black' ? '#1c1c1c' :
+              color.toLowerCase() === 'white' ? '#f5f5f5' :
+              color.toLowerCase() === 'taupe' ? '#8b8589' :
+              color.toLowerCase() === 'olive' ? '#556b2f' :
+              color.toLowerCase() === 'navy' ? '#000080' :
+              color.toLowerCase() === 'beige' ? '#d4be8d' : '#cccccc'
+            return (
+              <label
+                key={color}
+                className="flex items-center justify-between text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
+              >
+                <div className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleArrayParam('color', color)}
+                    className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+                  />
+                  <span
+                    className="w-3.5 h-3.5 rounded-full border-[0.5px] border-[var(--border)] shadow-3xs"
+                    style={{ backgroundColor: colorHex }}
+                  />
+                  <span>{color}</span>
+                </div>
+              </label>
+            )
+          })}
+        </div>
+      </FilterGroup>
+
+      {/* 4. Price Range (Range Slider & Quick Presets) */}
+      <FilterGroup
+        title="Price Range"
+        isOpen={priceOpen}
+        onToggle={() => setPriceOpen(!priceOpen)}
+        badgeCount={priceRangeId !== 'all' || maxPriceParam ? 1 : 0}
+      >
+        <div className="space-y-3 pt-1">
+          {/* Range Slider */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[13px] text-text-muted">
+              <span>$0 SGD</span>
+              <span className="font-medium text-[var(--text-primary)]">
+                Up to ${sliderMaxPrice} SGD
+              </span>
+            </div>
+            <input
+              type="range"
+              min="50"
+              max="400"
+              step="10"
+              value={sliderMaxPrice}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10)
+                setSliderMaxPrice(val)
+                updateParam('max_price', val >= 400 ? null : String(val))
+                updateParam('price', null)
+              }}
+              className="w-full h-1.5 bg-[var(--surface-2)] rounded-lg appearance-none cursor-pointer accent-[var(--text-accent)] hover:opacity-90 transition-opacity"
+            />
+          </div>
+
+          {/* Quick Presets */}
+          <div className="space-y-1 border-t border-[0.5px] border-[var(--border)] pt-2.5">
+            <span className="text-[11px] uppercase tracking-wider text-text-muted font-medium block mb-1">
+              Preset Bands
+            </span>
+            {PRICE_RANGES.map((range) => {
+              const isSelected = priceRangeId === range.id
+              return (
+                <label
+                  key={range.id}
+                  className="flex items-center gap-2 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-0.5"
+                >
+                  <input
+                    type="radio"
+                    name="price-band"
+                    checked={isSelected && !maxPriceParam}
+                    onChange={() => {
+                      updateParam('price', range.id === 'all' ? null : range.id)
+                      updateParam('max_price', null)
+                      if (range.max) setSliderMaxPrice(Math.round(range.max / 100))
+                      else setSliderMaxPrice(400)
+                    }}
+                    className="w-3.5 h-3.5 border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] cursor-pointer"
+                  />
+                  <span>{range.label}</span>
+                </label>
+              )
+            })}
+          </div>
+        </div>
+      </FilterGroup>
+
+      {/* 5. Availability */}
+      <FilterGroup
+        title="Availability"
+        isOpen={availabilityOpen}
+        onToggle={() => setAvailabilityOpen(!availabilityOpen)}
+        badgeCount={inStockOnly ? 1 : 0}
+      >
+        <div className="pt-1">
+          <label className="flex items-center gap-2.5 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1">
+            <input
+              type="checkbox"
+              checked={inStockOnly}
+              onChange={(e) => updateParam('in_stock', e.target.checked ? 'true' : null)}
+              className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+            />
+            <span>In Stock Only</span>
+          </label>
+        </div>
+      </FilterGroup>
+    </div>
+  )
 
   return (
     <>
@@ -97,12 +324,12 @@ export function ShopPage() {
         canonical={category ? `/shop?category=${category}` : '/shop'}
       />
 
-      <div className="container-main py-8 sm:py-12">
-        {/* ── Editorial Page Title ── */}
-        <div className="text-center max-w-xl mx-auto mb-8">
+      <div className="container-main py-6 sm:py-8">
+        {/* ── Editorial Collection Header ── */}
+        <div className="text-center max-w-xl mx-auto mb-6">
           <p className="editorial-subheading mb-2">The Collection</p>
           <h1 className="font-editorial text-4xl sm:text-5xl lg:text-6xl text-brand-black tracking-tight uppercase font-medium">
-            {activeCategory ? activeCategory.name : 'SHOP'}
+            {activeCategory ? activeCategory.name : 'SHOP ALL'}
           </h1>
           {activeCategory?.description && (
             <p className="font-sans text-xs sm:text-sm text-text-muted mt-2 font-light max-w-md mx-auto">
@@ -111,389 +338,290 @@ export function ShopPage() {
           )}
         </div>
 
-        {/* ── Category Sub-Navigation Bar ── */}
-        <div className="flex items-center justify-center gap-6 sm:gap-10 border-b border-border/80 overflow-x-auto scrollbar-none pb-3 mb-8">
-          <button
-            onClick={() => updateParam('category', null)}
-            className={cn(
-              'text-xs uppercase tracking-[0.2em] font-sans whitespace-nowrap transition-colors pb-1 relative',
-              !category
-                ? 'text-brand-black font-semibold after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-[2px] after:bg-brand-black'
-                : 'text-text-muted hover:text-brand-black'
-            )}
-          >
-            All Pieces
-          </button>
-          {categories?.map((cat) => (
+        {/* ── 56px Fixed/Sticky Control Header (Requirement 1 & 5) ── */}
+        <header
+          className="sticky top-14 sm:top-16 lg:top-20 z-20 h-[56px] bg-surface/95 backdrop-blur-md border-y border-[0.5px] border-[var(--border)] flex items-center justify-between px-4 sm:px-6 lg:px-8 mb-8 transition-colors"
+          style={{ borderWidth: '0.5px' }}
+        >
+          {/* Left: Hamburger menu icon button to collapse/expand sidebar */}
+          <div className="flex items-center gap-4 sm:gap-5">
             <button
-              key={cat.id}
-              onClick={() => updateParam('category', cat.slug)}
-              className={cn(
-                'text-xs uppercase tracking-[0.2em] font-sans whitespace-nowrap transition-colors pb-1 relative',
-                category === cat.slug
-                  ? 'text-brand-black font-semibold after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-[2px] after:bg-brand-black'
-                  : 'text-text-muted hover:text-brand-black'
-              )}
+              type="button"
+              onClick={() => setSidebarOpen((s) => !s)}
+              className="inline-flex items-center justify-center gap-3 h-10 px-4 sm:px-5 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] bg-surface hover:bg-[var(--surface-2)] text-[var(--text-primary)] transition-all cursor-pointer select-none group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--text-accent)]"
+              aria-label={sidebarOpen ? 'Collapse sidebar filters' : 'Expand sidebar filters'}
+              title={sidebarOpen ? 'Collapse filters sidebar' : 'Expand filters sidebar'}
             >
-              {cat.name}
+              <Menu className="h-4 w-4 shrink-0 text-[var(--text-primary)] group-hover:text-[var(--text-accent)] transition-colors" />
+              <span className="text-[13px] sm:text-[14px] font-[500] uppercase tracking-wider leading-none">
+                {sidebarOpen ? 'Hide Filters' : 'Filters'}
+              </span>
+              {hasActiveFilters && (
+                <span
+                  className="w-2 h-2 rounded-full bg-[var(--text-accent)] shrink-0"
+                  aria-label="Filters active"
+                />
+              )}
             </button>
-          ))}
-        </div>
 
-        {/* ── Desktop Horizontal Filter & Sort Bar ── */}
-        <div className="hidden lg:flex items-center justify-between py-4 border-b border-border/60 mb-8">
-          {/* Left: Horizontal filters */}
-          <div className="flex items-center gap-6">
-            <span className="text-xs uppercase tracking-[0.15em] font-sans font-medium text-text-muted">
-              Filter:
-            </span>
-
-            {/* Sizes */}
-            <div className="flex items-center gap-1.5">
-              {SIZES.map((size) => {
-                const isSelected = selectedSizes.includes(size)
-                return (
-                  <button
-                    key={size}
-                    onClick={() => toggleArrayParam('size', size)}
-                    className={cn(
-                      'px-2.5 py-1 text-xs font-sans rounded-xs transition-colors border',
-                      isSelected
-                        ? 'bg-brand-black text-white border-brand-black font-medium'
-                        : 'bg-transparent text-text-secondary border-border/80 hover:border-brand-black'
-                    )}
-                  >
-                    {size}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="h-4 w-[1px] bg-border/80" />
-
-            {/* Colors */}
-            <div className="flex items-center gap-2">
-              {COLORS.map((color) => {
-                const isSelected = selectedColors.includes(color)
-                return (
-                  <button
-                    key={color}
-                    onClick={() => toggleArrayParam('color', color)}
-                    className={cn(
-                      'text-xs font-sans px-2.5 py-1 rounded-xs border transition-colors',
-                      isSelected
-                        ? 'bg-brand-black text-white border-brand-black font-medium'
-                        : 'bg-transparent text-text-secondary border-border/80 hover:border-brand-black'
-                    )}
-                  >
-                    {color}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="h-4 w-[1px] bg-border/80" />
-
-            {/* In stock toggle */}
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-sans text-text-secondary select-none">
-              <input
-                type="checkbox"
-                checked={inStockOnly}
-                onChange={(e) => updateParam('in_stock', e.target.checked ? 'true' : null)}
-                className="w-3.5 h-3.5 accent-brand-black rounded-xs"
-              />
-              In Stock Only
-            </label>
-          </div>
-
-          {/* Right: Piece Count + Sort */}
-          <div className="flex items-center gap-6">
-            <span className="text-xs font-sans text-text-muted tracking-wider">
+            <span className="text-[13px] font-sans text-text-muted border-l border-[0.5px] border-[var(--border)] pl-4 hidden xs:inline leading-none">
               {totalCount} {totalCount === 1 ? 'piece' : 'pieces'}
             </span>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-sans uppercase tracking-wider text-text-muted font-medium">Sort:</span>
-              <select
-                value={sort}
-                onChange={(e) => updateParam('sort', e.target.value)}
-                className="bg-transparent border-0 border-b border-border/80 text-xs font-sans font-medium text-brand-black py-1 pr-6 focus:ring-0 focus:outline-none cursor-pointer"
-                aria-label="Sort options"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
-        </div>
 
-        {/* ── Active Filter Tags (Desktop & Mobile) ── */}
-        {hasActiveFilters && (
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <span className="text-xs uppercase font-sans tracking-wider text-text-muted">Active:</span>
-            {activeCategory && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80">
-                {activeCategory.name}
-                <button onClick={() => updateParam('category', null)} aria-label="Remove category filter">
-                  <X className="h-3 w-3" />
-                </button>
+          {/* Center: Active filter chips with comfortable inner spacing */}
+          {hasActiveFilters && (
+            <div className="hidden md:flex items-center gap-2 overflow-x-auto max-w-[45%] scrollbar-none px-3">
+              <span className="text-[11px] uppercase tracking-wider text-text-muted font-medium shrink-0">
+                Active:
               </span>
-            )}
-            {selectedSizes.map((size) => (
-              <span
-                key={size}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80"
-              >
-                Size: {size}
-                <button onClick={() => toggleArrayParam('size', size)} aria-label={`Remove size ${size}`}>
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-            {selectedColors.map((color) => (
-              <span
-                key={color}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80"
-              >
-                {color}
-                <button onClick={() => toggleArrayParam('color', color)} aria-label={`Remove color ${color}`}>
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            ))}
-            {inStockOnly && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-ivory text-brand-black text-xs rounded-full border border-border/80">
-                In Stock
-                <button onClick={() => updateParam('in_stock', null)} aria-label="Remove in stock filter">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-            <button
-              onClick={clearAllFilters}
-              className="text-xs text-text-muted hover:text-brand-black underline underline-offset-4 ml-2"
-            >
-              Clear all
-            </button>
-          </div>
-        )}
-
-        {/* ── Sticky Mobile Filter / Sort Bar (< 1024px) ── */}
-        <div className="lg:hidden sticky top-[57px] z-20 -mx-4 px-4 py-3 bg-surface/95 backdrop-blur-md border-y border-border/80 flex items-center justify-between mb-6 shadow-xs">
-          <span className="text-xs font-sans tracking-wider text-text-muted">
-            {totalCount} {totalCount === 1 ? 'piece' : 'pieces'}
-          </span>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setFilterDrawerOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-sans uppercase tracking-wider font-medium border border-brand-black bg-white rounded-xs"
-              aria-label="Open filter drawer"
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filter
-              {hasActiveFilters && (
-                <span className="w-4 h-4 bg-brand-black text-white text-[10px] rounded-full flex items-center justify-center -mr-1">
-                  {selectedSizes.length + selectedColors.length + (category ? 1 : 0) + (inStockOnly ? 1 : 0)}
+              {activeCategory && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--surface-2)] text-[var(--text-primary)] text-[12px] leading-tight rounded-[var(--radius)] border-[0.5px] border-[var(--border)] shrink-0">
+                  <span>{activeCategory.name}</span>
+                  <button
+                    onClick={() => updateParam('category', null)}
+                    aria-label="Remove category"
+                    className="p-0.5 hover:text-[var(--text-accent)] transition-colors cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </span>
               )}
-            </button>
-
-            <button
-              onClick={() => setMobileSortOpen(!mobileSortOpen)}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-sans uppercase tracking-wider font-medium border border-border bg-white rounded-xs"
-              aria-label="Toggle sort options"
-            >
-              <ArrowUpDown className="h-3.5 w-3.5" />
-              Sort
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Sort Dropdown Popover */}
-        {mobileSortOpen && (
-          <div className="lg:hidden mb-6 p-4 bg-surface-raised border border-border rounded-md shadow-md animate-fade-in">
-            <p className="text-xs uppercase font-sans font-medium text-text-muted mb-2 tracking-wider">Sort by</p>
-            <div className="space-y-1">
-              {SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    updateParam('sort', opt.value)
-                    setMobileSortOpen(false)
-                  }}
-                  className={cn(
-                    'w-full text-left py-2 px-3 text-xs font-sans rounded-xs flex items-center justify-between',
-                    sort === opt.value ? 'bg-brand-smoke text-brand-black font-semibold' : 'text-text-secondary'
-                  )}
+              {selectedSizes.map((size) => (
+                <span
+                  key={size}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--surface-2)] text-[var(--text-primary)] text-[12px] leading-tight rounded-[var(--radius)] border-[0.5px] border-[var(--border)] shrink-0"
                 >
-                  <span>{opt.label}</span>
-                  {sort === opt.value && <Check className="h-3.5 w-3.5 text-brand-black" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Product Grid ── */}
-        {isLoading ? (
-          <ProductGridSkeleton count={8} />
-        ) : data?.products.length === 0 ? (
-          <EmptyState
-            type="search"
-            title="NO PIECES MATCH YOUR FILTER"
-            description="Try adjusting your size, color, or category selection to find what you are looking for."
-            actionLabel="CLEAR FILTERS"
-            onAction={clearAllFilters}
-          />
-        ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-12">
-              {data?.products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-16 flex justify-center">
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={(p) => updateParam('page', String(p))}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* ── Mobile Filter Drawer ── */}
-      <Drawer
-        isOpen={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        title="FILTERS"
-        side="left"
-        width="w-[320px]"
-      >
-        <div className="flex flex-col h-full p-6 justify-between">
-          <div className="space-y-6 overflow-y-auto">
-            {/* Category */}
-            <div>
-              <p className="text-xs uppercase font-sans font-medium text-text-muted tracking-[0.2em] mb-3">
-                Category
-              </p>
-              <div className="space-y-1.5">
-                <button
-                  onClick={() => updateParam('category', null)}
-                  className={cn(
-                    'w-full text-left py-1 text-xs uppercase tracking-wider',
-                    !category ? 'font-semibold text-brand-black' : 'text-text-secondary hover:text-brand-black'
-                  )}
-                >
-                  All
-                </button>
-                {categories?.map((cat) => (
+                  <span>{size}</span>
                   <button
-                    key={cat.id}
-                    onClick={() => updateParam('category', cat.slug)}
-                    className={cn(
-                      'w-full text-left py-1 text-xs uppercase tracking-wider',
-                      category === cat.slug ? 'font-semibold text-brand-black' : 'text-text-secondary hover:text-brand-black'
-                    )}
+                    onClick={() => toggleArrayParam('size', size)}
+                    aria-label={`Remove size ${size}`}
+                    className="p-0.5 hover:text-[var(--text-accent)] transition-colors cursor-pointer"
                   >
-                    {cat.name}
+                    <X className="h-3 w-3" />
                   </button>
-                ))}
-              </div>
+                </span>
+              ))}
+              {selectedColors.map((color) => (
+                <span
+                  key={color}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--surface-2)] text-[var(--text-primary)] text-[12px] leading-tight rounded-[var(--radius)] border-[0.5px] border-[var(--border)] shrink-0"
+                >
+                  <span>{color}</span>
+                  <button
+                    onClick={() => toggleArrayParam('color', color)}
+                    aria-label={`Remove color ${color}`}
+                    className="p-0.5 hover:text-[var(--text-accent)] transition-colors cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {inStockOnly && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--surface-2)] text-[var(--text-primary)] text-[12px] leading-tight rounded-[var(--radius)] border-[0.5px] border-[var(--border)] shrink-0">
+                  <span>In Stock</span>
+                  <button
+                    onClick={() => updateParam('in_stock', null)}
+                    aria-label="Remove in stock filter"
+                    className="p-0.5 hover:text-[var(--text-accent)] transition-colors cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {(priceRangeId !== 'all' || maxPriceParam) && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--surface-2)] text-[var(--text-primary)] text-[12px] leading-tight rounded-[var(--radius)] border-[0.5px] border-[var(--border)] shrink-0">
+                  <span>{maxPriceParam ? `< $${maxPriceParam}` : selectedPriceRange.label}</span>
+                  <button
+                    onClick={() => {
+                      updateParam('price', null)
+                      updateParam('max_price', null)
+                      setSliderMaxPrice(400)
+                    }}
+                    aria-label="Remove price filter"
+                    className="p-0.5 hover:text-[var(--text-accent)] transition-colors cursor-pointer"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={clearAllFilters}
+                className="text-[12px] text-text-muted hover:text-[var(--text-accent)] underline underline-offset-2 ml-1 cursor-pointer shrink-0 transition-colors"
+              >
+                Clear all
+              </button>
             </div>
+          )}
 
-            {/* Size */}
-            <div>
-              <p className="text-xs uppercase font-sans font-medium text-text-muted tracking-[0.2em] mb-3">
-                Size
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {SIZES.map((size) => {
-                  const isSelected = selectedSizes.includes(size)
-                  return (
-                    <button
-                      key={size}
-                      onClick={() => toggleArrayParam('size', size)}
-                      className={cn(
-                        'w-10 h-10 text-xs font-sans rounded-xs border transition-colors flex items-center justify-center',
-                        isSelected
-                          ? 'bg-brand-black text-white border-brand-black font-semibold'
-                          : 'bg-transparent text-text-primary border-border hover:border-brand-black'
-                      )}
-                    >
-                      {size}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Color */}
-            <div>
-              <p className="text-xs uppercase font-sans font-medium text-text-muted tracking-[0.2em] mb-3">
-                Color
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {COLORS.map((color) => {
-                  const isSelected = selectedColors.includes(color)
-                  return (
-                    <button
-                      key={color}
-                      onClick={() => toggleArrayParam('color', color)}
-                      className={cn(
-                        'px-3 py-1.5 text-xs font-sans rounded-xs border transition-colors',
-                        isSelected
-                          ? 'bg-brand-black text-white border-brand-black font-medium'
-                          : 'bg-transparent text-text-secondary border-border hover:border-brand-black'
-                      )}
-                    >
-                      {color}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* In stock */}
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer text-xs font-sans text-text-primary">
-                <input
-                  type="checkbox"
-                  checked={inStockOnly}
-                  onChange={(e) => updateParam('in_stock', e.target.checked ? 'true' : null)}
-                  className="w-4 h-4 accent-brand-black rounded-xs"
-                />
-                In Stock Only
-              </label>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="pt-6 border-t border-border flex gap-3">
-            <button
-              onClick={clearAllFilters}
-              className="flex-1 py-3 text-xs uppercase tracking-widest font-medium border border-border hover:border-brand-black transition-colors"
+          {/* Right: Flat Sort selector with balanced padding */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-[13px] font-sans text-text-muted hidden sm:inline">Sort:</span>
+            <select
+              value={sort}
+              onChange={(e) => updateParam('sort', e.target.value)}
+              className="h-10 px-3.5 sm:px-4 bg-surface border-[0.5px] border-[var(--border)] rounded-[var(--radius)] text-[13px] font-sans text-[var(--text-primary)] hover:border-[var(--text-accent)] focus:outline-none focus:border-[var(--text-accent)] cursor-pointer transition-colors"
+              aria-label="Sort products"
             >
-              Reset
-            </button>
-            <button
-              onClick={() => setFilterDrawerOpen(false)}
-              className="flex-1 py-3 text-xs uppercase tracking-widest font-medium bg-brand-black text-white hover:bg-brand-charcoal transition-colors"
-            >
-              View Results
-            </button>
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
+        </header>
+
+        {/* ── Main Layout: 280px Persistent Sidebar + Auto-fit Grid (Requirement 2, 4, 5) ── */}
+        <div className="flex items-start transition-all duration-300 ease-in-out">
+          {/* Desktop Persistent Sidebar (280px fixed width, smooth collapse) */}
+          <aside
+            aria-label="Product filters"
+            className={cn(
+              'hidden lg:block flex-shrink-0 transition-all duration-300 ease-in-out overflow-hidden',
+              sidebarOpen
+                ? 'w-[280px] opacity-100 mr-8'
+                : 'w-0 opacity-0 mr-0 pointer-events-none'
+            )}
+          >
+            <div className="w-[280px] bg-surface border-[0.5px] border-[var(--border)] rounded-[var(--radius)] p-5 space-y-4 sticky top-[124px] max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-thin">
+              <div className="flex items-center justify-between pb-3 border-b border-[0.5px] border-[var(--border)]">
+                <span className="text-[14px] font-[500] uppercase tracking-wider text-[var(--text-primary)]">
+                  Filter by
+                </span>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="text-[12px] font-sans text-text-muted hover:text-[var(--text-accent)] underline underline-offset-2 transition-colors cursor-pointer"
+                  >
+                    Reset All
+                  </button>
+                )}
+              </div>
+
+              {renderFilterGroups()}
+            </div>
+          </aside>
+
+          {/* Mobile Overlay Sidebar Drawer (< 1024px) */}
+          {sidebarOpen && (
+            <div className="lg:hidden fixed inset-0 z-modal flex">
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-fade-in"
+                onClick={() => setSidebarOpen(false)}
+                aria-hidden="true"
+              />
+              {/* Drawer */}
+              <div className="relative w-[280px] max-w-[85vw] bg-surface h-full shadow-2xl border-r border-[0.5px] border-[var(--border)] p-4 sm:p-5 overflow-y-auto z-10 flex flex-col justify-between animate-slide-in-left">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-[0.5px] border-[var(--border)]">
+                    <span className="text-[14px] font-[500] uppercase tracking-wider text-[var(--text-primary)]">
+                      Filter by
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSidebarOpen(false)}
+                      className="p-1.5 rounded-[var(--radius)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] transition-colors cursor-pointer"
+                      aria-label="Close filters"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {renderFilterGroups()}
+                </div>
+                <div className="pt-4 border-t border-[0.5px] border-[var(--border)] mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    className="w-full py-2.5 bg-brand-black text-white text-[13px] font-sans font-[500] uppercase tracking-wider rounded-[var(--radius)] hover:bg-black/85 transition-colors cursor-pointer"
+                  >
+                    Show {totalCount} {totalCount === 1 ? 'Piece' : 'Pieces'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content Area (Auto-fit Grid) */}
+          <main className="flex-1 min-w-0 transition-all duration-300 ease-in-out">
+            {isLoading ? (
+              <ProductGridSkeleton count={8} />
+            ) : data?.products.length === 0 ? (
+              <EmptyState
+                type="search"
+                title="NO PIECES MATCH YOUR FILTER"
+                description="Try adjusting your size, color, or category selection to find what you are looking for."
+                actionLabel="CLEAR FILTERS"
+                onAction={clearAllFilters}
+              />
+            ) : (
+              <>
+                {/* Auto-fit columns grid: when sidebar collapses, grid smoothly re-flows */}
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 sm:gap-6 transition-all duration-300">
+                  {data?.products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-16 flex justify-center">
+                    <Pagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={(p) => updateParam('page', String(p))}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </main>
         </div>
-      </Drawer>
+      </div>
     </>
+  )
+}
+
+// ── Collapsible Filter Group Component ──
+function FilterGroup({
+  title,
+  isOpen,
+  onToggle,
+  children,
+  badgeCount,
+}: {
+  title: string
+  isOpen: boolean
+  onToggle: () => void
+  children: React.ReactNode
+  badgeCount?: number
+}) {
+  return (
+    <div className="border-b border-[0.5px] border-[var(--border)] py-3 last:border-b-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex items-center justify-between w-full py-1 text-left group cursor-pointer select-none"
+        aria-expanded={isOpen}
+      >
+        <span className="text-[14px] font-[500] text-[var(--text-primary)] group-hover:text-[var(--text-accent)] transition-colors flex items-center gap-2">
+          {title}
+          {Boolean(badgeCount && badgeCount > 0) && (
+            <span className="w-4 h-4 rounded-full bg-[var(--text-accent)] text-white text-[10px] flex items-center justify-center font-medium">
+              {badgeCount}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 text-text-muted transition-transform duration-200 transform group-hover:text-[var(--text-primary)]',
+            isOpen ? 'rotate-180' : 'rotate-0'
+          )}
+        />
+      </button>
+      {isOpen && <div className="pt-2 pb-1 space-y-2 animate-fade-in">{children}</div>}
+    </div>
   )
 }

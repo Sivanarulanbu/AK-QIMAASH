@@ -20,6 +20,9 @@ const CheckoutPage = lazy(() =>
 const WishlistPage = lazy(() =>
   import('@/pages/wishlist/WishlistPage').then((m) => ({ default: m.WishlistPage }))
 )
+const CartPage = lazy(() =>
+  import('@/pages/cart/CartPage').then((m) => ({ default: m.CartPage }))
+)
 const SearchPage = lazy(() =>
   import('@/pages/shop/SearchPage').then((m) => ({ default: m.SearchPage }))
 )
@@ -109,7 +112,7 @@ export const router = createBrowserRouter([
       { path: 'products/:slug', element: <S><ProductDetailPage /></S> },
       { path: 'search', element: <S><SearchPage /></S> },
       { path: 'wishlist', element: <S><WishlistPage /></S> },
-      { path: 'cart', element: <Navigate to="/shop" replace /> },
+      { path: 'cart', element: <S><CartPage /></S> },
       { path: 'checkout', element: <S><CheckoutPage /></S> },
 
       // Auth
@@ -210,7 +213,7 @@ export const router = createBrowserRouter([
       {
         path: 'staff',
         element: (
-          <RequireRole roles={['ADMIN']}>
+          <RequireRole roles={['ADMIN']} requireMfa={true}>
             <S><AdminStaffPage /></S>
           </RequireRole>
         ),
@@ -226,7 +229,7 @@ export const router = createBrowserRouter([
       {
         path: 'audit',
         element: (
-          <RequireRole roles={['ADMIN']}>
+          <RequireRole roles={['ADMIN']} requireMfa={true}>
             <S><AdminAuditLogPage /></S>
           </RequireRole>
         ),
@@ -234,7 +237,7 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: (
-          <RequireRole roles={['ADMIN']}>
+          <RequireRole roles={['ADMIN']} requireMfa={true}>
             <S><AdminSettingsPage /></S>
           </RequireRole>
         ),

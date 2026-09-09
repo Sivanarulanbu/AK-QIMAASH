@@ -171,9 +171,17 @@ export function CartDrawer() {
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
 
+                <Link
+                  to="/cart"
+                  onClick={closeCart}
+                  className="w-full py-2 text-center text-xs uppercase tracking-wider font-sans font-medium text-brand-black hover:text-accent transition-colors border border-border/80 rounded-xs block"
+                >
+                  View Full Bag ({totalItemCount})
+                </Link>
+
                 <button
                   onClick={closeCart}
-                  className="w-full py-1.5 text-center text-[11px] uppercase tracking-widest font-sans text-text-muted hover:text-brand-black transition-colors"
+                  className="w-full py-1 text-center text-[11px] uppercase tracking-widest font-sans text-text-muted hover:text-brand-black transition-colors"
                 >
                   Continue Shopping
                 </button>

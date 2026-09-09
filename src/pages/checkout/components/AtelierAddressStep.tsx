@@ -9,9 +9,10 @@ import { cn } from '@/utils'
 interface Props {
   onSubmit: (data: SGAddressFormData) => void
   defaultValues?: Partial<SGAddressFormData> | null
+  isGuest?: boolean
 }
 
-export function AtelierAddressStep({ onSubmit, defaultValues }: Props) {
+export function AtelierAddressStep({ onSubmit, defaultValues, isGuest }: Props) {
   const [showInstructions, setShowInstructions] = useState(false)
   const {
     register,
@@ -37,7 +38,28 @@ export function AtelierAddressStep({ onSubmit, defaultValues }: Props) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+        {/* Contact Email (crucial for guest checkout confirmation) */}
+        <div>
+          <label className="block text-xs font-sans font-medium text-text-primary mb-1.5">
+            Contact email address {isGuest && <span className="text-error">*</span>}
+          </label>
+          <input
+            type="email"
+            placeholder="client@example.com"
+            {...register('email')}
+            className={cn(
+              'input-base text-sm',
+              errors.email && 'border-error bg-error-light/10'
+            )}
+          />
+          {errors.email && (
+            <p className="mt-1 text-xs text-error">{errors.email.message}</p>
+          )}
+          <p className="text-[11px] text-text-muted mt-1 font-light">
+            Order confirmation, invoice, and Singapore tracking updates will be sent to this email.
+          </p>
+        </div>
         {/* Recipient Name & Phone */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

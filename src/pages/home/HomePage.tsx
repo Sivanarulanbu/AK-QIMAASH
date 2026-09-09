@@ -34,7 +34,7 @@ const HERO_SLIDES: HeroSlide[] = [
     secondaryBtnLink: '/pages/about',
     image: '/images/hero-banner.jpg',
     imageAlt: 'AK QIMAASH Draped Abaya Edition',
-    objectPosition: 'object-[75%_center] md:object-[center_35%]',
+    objectPosition: 'object-[80%_center] md:object-[center_35%]',
   },
   {
     id: 2,
@@ -47,7 +47,7 @@ const HERO_SLIDES: HeroSlide[] = [
     secondaryBtnLink: '/shop',
     image: '/images/hero-slide-2.jpg',
     imageAlt: 'AK QIMAASH Tailored Coat Abaya',
-    objectPosition: 'object-[75%_center] md:object-[center_28%]',
+    objectPosition: 'object-[80%_center] md:object-[center_28%]',
   },
   {
     id: 3,
@@ -60,7 +60,7 @@ const HERO_SLIDES: HeroSlide[] = [
     secondaryBtnLink: '/pages/about',
     image: '/images/hero-slide-3.jpg',
     imageAlt: 'AK QIMAASH Relaxed French Linen Shirt and Trousers',
-    objectPosition: 'object-[70%_center] md:object-[center_35%]',
+    objectPosition: 'object-[78%_center] md:object-[center_35%]',
   },
   {
     id: 4,
@@ -73,7 +73,7 @@ const HERO_SLIDES: HeroSlide[] = [
     secondaryBtnLink: '/shop',
     image: '/images/hero-slide-4.jpg',
     imageAlt: 'AK QIMAASH Obsidian Evening Silk Abaya',
-    objectPosition: 'object-[75%_center] md:object-[center_25%]',
+    objectPosition: 'object-[80%_center] md:object-[center_25%]',
   },
 ]
 
@@ -107,9 +107,13 @@ export function HomePage() {
     setProgressKey((k) => k + 1)
   }
 
-  // Automatic carousel timer that advances every 5 seconds
+  // Automatic carousel timer that advances every 5 seconds (respects reduced motion preference)
   useEffect(() => {
-    if (isPaused) return
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (isPaused || prefersReducedMotion) return
 
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length)
@@ -178,6 +182,11 @@ export function HomePage() {
         aria-label="Editorial Hero Showcase"
         aria-roledescription="carousel"
       >
+        {/* Screen-reader live region for slide transitions */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {`Slide ${currentSlide + 1} of ${HERO_SLIDES.length}: ${HERO_SLIDES[currentSlide].title}`}
+        </div>
+
         {/* Full-bleed Editorial Photos Layer with smooth cross-fade & subtle Ken-Burns zoom */}
         {HERO_SLIDES.map((slide, idx) => {
           const isActive = idx === currentSlide
@@ -199,6 +208,8 @@ export function HomePage() {
                   slide.objectPosition
                 )}
                 loading={idx === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={idx === 0 ? 'high' : 'auto'}
               />
             </div>
           )
@@ -215,44 +226,46 @@ export function HomePage() {
           }}
           aria-hidden="true"
         />
-        {/* Mobile responsive overlay */}
+        {/* Mobile responsive overlay:
+            Directional gradient from left to right to protect dark text legibility,
+            transitioning to 100% transparent on the right so the model photo is crisp with NO milky white wash */}
         <div
           className="absolute inset-0 md:hidden pointer-events-none z-[1]"
           style={{
             background:
-              'linear-gradient(180deg, rgba(250,249,247,0.98) 0%, rgba(250,249,247,0.88) 45%, rgba(250,249,247,0.2) 100%)',
+              'linear-gradient(90deg, rgba(250,249,247,0.96) 0%, rgba(250,249,247,0.85) 45%, rgba(250,249,247,0.2) 70%, rgba(250,249,247,0) 88%)',
           }}
           aria-hidden="true"
         />
 
         {/* Hero Content - Left-aligned with dynamic story text and luxury button */}
         <div className="container-main relative z-10 w-full py-4 sm:py-6 lg:py-8">
-          <div className="max-w-xl text-left">
+          <div className="max-w-[72%] sm:max-w-xl text-left">
             <div key={currentSlide} className="animate-fade-in">
-              <p className="text-xs uppercase tracking-[0.3em] font-sans font-medium text-[#555555] mb-2 sm:mb-2.5">
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] font-sans font-medium text-[#555555] mb-1.5 sm:mb-2.5">
                 {HERO_SLIDES[currentSlide].tag}
               </p>
-              <h1 className="font-editorial text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.05] uppercase font-light mb-3 sm:mb-3.5 text-[#1a1a1a]">
+              <h1 className="font-editorial text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight leading-[1.08] sm:leading-[1.05] uppercase font-light mb-2.5 sm:mb-3.5 text-[#1a1a1a]">
                 {HERO_SLIDES[currentSlide].title}
               </h1>
-              <p className="font-sans text-sm sm:text-base text-[#2d2d2d] font-light leading-[1.75] max-w-lg mb-5 sm:mb-6">
+              <p className="font-sans text-xs sm:text-sm md:text-base text-[#2d2d2d] font-light leading-[1.65] sm:leading-[1.75] max-w-lg mb-4 sm:mb-6 line-clamp-3 sm:line-clamp-none">
                 {HERO_SLIDES[currentSlide].description}
               </p>
               <div
-                className="flex flex-wrap items-center gap-3 sm:gap-4"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
               >
                 <Link
                   to={HERO_SLIDES[currentSlide].primaryBtnLink}
-                  className="group inline-flex items-center justify-center gap-3 px-7 py-3 sm:py-3.5 bg-[#1a1a1a] text-white text-xs uppercase tracking-[0.2em] font-sans font-semibold shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:bg-black transition-all duration-300 rounded-xs"
+                  className="group inline-flex items-center justify-center gap-2.5 px-5 sm:px-7 py-2.5 sm:py-3.5 bg-[#1a1a1a] text-white text-[11px] sm:text-xs uppercase tracking-[0.2em] font-sans font-semibold shadow-md hover:shadow-xl hover:-translate-y-0.5 hover:bg-black transition-all duration-300 rounded-xs whitespace-nowrap"
                 >
                   <span>{HERO_SLIDES[currentSlide].primaryBtnText}</span>
                   <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1.5 transition-transform duration-300" />
                 </Link>
                 <Link
                   to={HERO_SLIDES[currentSlide].secondaryBtnLink}
-                  className="inline-flex items-center justify-center px-6 py-3 sm:py-3.5 border border-[#1a1a1a]/40 text-[#1a1a1a] text-xs uppercase tracking-[0.2em] font-sans font-medium hover:bg-[#1a1a1a] hover:text-white hover:-translate-y-0.5 transition-all duration-300 rounded-xs"
+                  className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3.5 border border-[#1a1a1a]/40 text-[#1a1a1a] text-[11px] sm:text-xs uppercase tracking-[0.2em] font-sans font-medium hover:bg-[#1a1a1a] hover:text-white hover:-translate-y-0.5 transition-all duration-300 rounded-xs whitespace-nowrap"
                 >
                   {HERO_SLIDES[currentSlide].secondaryBtnText}
                 </Link>
@@ -350,7 +363,7 @@ export function HomePage() {
           {arrivalsLoading ? (
             <ProductGridSkeleton count={4} />
           ) : newArrivals && newArrivals.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-x-6 sm:gap-y-14">
               {newArrivals.slice(0, 8).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

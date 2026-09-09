@@ -166,8 +166,17 @@ export function useProducts(filters: ProductFilters = {}) {
         products = products.filter((p) => p.name.toLowerCase().includes(s) || p.description?.toLowerCase().includes(s))
       }
 
-      // Client-side filter for size/color
-      const filtered = products.filter((p) => {
+      // Client-side filter for size/color/price/stock
+      let filtered = products.filter((p) => {
+        if (in_stock && !p.variants.some((v) => v.stock_quantity > 0)) {
+          return false
+        }
+        if (min_price_cents !== undefined && p.min_price_cents < min_price_cents) {
+          return false
+        }
+        if (max_price_cents !== undefined && p.min_price_cents > max_price_cents) {
+          return false
+        }
         if (sizes && sizes.length > 0) {
           if (!p.variants.some((v) => v.size && sizes.includes(v.size))) return false
         }
@@ -176,6 +185,15 @@ export function useProducts(filters: ProductFilters = {}) {
         }
         return true
       })
+
+      // Client-side sorting for fallback pool
+      if (sort === 'price_asc') {
+        filtered = [...filtered].sort((a, b) => a.min_price_cents - b.min_price_cents)
+      } else if (sort === 'price_desc') {
+        filtered = [...filtered].sort((a, b) => b.min_price_cents - a.min_price_cents)
+      } else if (sort === 'name_asc') {
+        filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name))
+      }
 
       return { products: filtered, total: totalCount || filtered.length }
     },

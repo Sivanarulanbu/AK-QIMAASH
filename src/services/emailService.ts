@@ -72,28 +72,35 @@ export async function sendBrevoEmail(
 
   let lastError = ''
   for (const endpoint of endpoints) {
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': BREVO_API_KEY,
-        },
-        body: JSON.stringify(payload),
-      })
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': BREVO_API_KEY,
+          },
+          body: JSON.stringify(payload),
+        })
 
-      if (res.ok) {
-        const data = await res.json()
-        console.info(`[EmailService] Email sent successfully via Brevo (${endpoint}) to ${toEmail}. Message ID:`, data.messageId)
-        return { success: true, messageId: data.messageId }
+        if (res.ok) {
+          const data = await res.json()
+          console.info(`[EmailService] Email sent successfully via Brevo (${endpoint}) to ${toEmail}. Message ID:`, data.messageId)
+          return { success: true, messageId: data.messageId }
+        }
+
+        const errData = await res.json().catch(() => ({}))
+        lastError = errData.message || `HTTP ${res.status} ${res.statusText}`
+        console.warn(`[EmailService] Endpoint ${endpoint} (attempt ${attempt}) returned error:`, lastError)
+      } catch (err: any) {
+        lastError = err?.message || String(err)
+        console.warn(`[EmailService] Network attempt to ${endpoint} (attempt ${attempt}) failed:`, lastError)
       }
 
-      const errData = await res.json().catch(() => ({}))
-      lastError = errData.message || `HTTP ${res.status} ${res.statusText}`
-      console.warn(`[EmailService] Endpoint ${endpoint} returned error:`, lastError)
-    } catch (err: any) {
-      lastError = err?.message || String(err)
-      console.warn(`[EmailService] Network attempt to ${endpoint} failed:`, lastError)
+      // Short delay before second attempt
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+      }
     }
   }
 

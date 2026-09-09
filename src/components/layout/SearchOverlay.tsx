@@ -5,9 +5,11 @@ import { useProducts, type ProductWithDetails } from '@/features/products/usePro
 import { formatPrice } from '@/lib/commerce'
 import { cn } from '@/utils'
 
+import { useSearchOverlayStore } from '@/store/searchOverlayStore'
+
 interface SearchOverlayProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 interface SubFilter {
@@ -84,7 +86,12 @@ const SUB_FILTERS: SubFilter[] = [
 
 const RECENT_KEY = 'akq_recent_searches'
 
-export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
+export function SearchOverlay({ isOpen: propIsOpen, onClose: propOnClose }: SearchOverlayProps = {}) {
+  const storeIsOpen = useSearchOverlayStore((s) => s.isOpen)
+  const storeClose = useSearchOverlayStore((s) => s.closeSearch)
+
+  const isOpen = propIsOpen !== undefined ? propIsOpen : storeIsOpen
+  const onClose = propOnClose || storeClose
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import type { Database } from '@/types/database'
 import { sendOrderEmail } from '@/services/emailService'
+import { isValidStatusTransition, type OrderStatus } from '@/lib/commerce'
 
 type Order = Database['public']['Tables']['orders']['Row']
 type OrderItem = Database['public']['Tables']['order_items']['Row']
@@ -161,8 +162,31 @@ export function useUpdateOrderStatus() {
       tracking_number?: string
       courier_name?: string
     }) => {
-      // Update order status
-      const updates: Record<string, unknown> = { status, updated_at: new Date().toISOString() }
+      // Fetch current order to validate transition and payment method
+      const { data: currentOrder, error: fetchErr } = await (supabase.from('orders') as any)
+        .select('status, payment_method')
+        .eq('id', orderId)
+        .single()
+
+      if (fetchErr || !currentOrder) {
+        throw new Error('Order not found for status update.')
+      }
+
+      // Enforce status transition state machine
+      if (!isValidStatusTransition(currentOrder.status as OrderStatus, status as OrderStatus)) {
+        throw new Error(
+          `Invalid status transition: Cannot change order from ${currentOrder.status} to ${status}.`
+        )
+      }
+
+      // Update order status and automatically mark COD collected on DELIVERED
+      const updates: Record<string, unknown> = {
+        status,
+        updated_at: new Date().toISOString(),
+      }
+      if (status === 'DELIVERED' && currentOrder.payment_method === 'COD') {
+        updates.payment_status = 'PAID'
+      }
       if (tracking_number) updates.tracking_number = tracking_number
       if (courier_name) updates.courier_name = courier_name
 

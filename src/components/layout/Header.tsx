@@ -3,19 +3,19 @@ import { Link, useLocation } from 'react-router-dom'
 import { Search, ShoppingBag, Heart, User, Menu, X, ShieldCheck } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
+import { useSearchOverlayStore } from '@/store/searchOverlayStore'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useCategories } from '@/features/products/useProducts'
-import { SearchOverlay } from '@/components/layout/SearchOverlay'
 import { cn } from '@/utils'
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
-  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
 
   const totalItems = useCartStore((s) => s.totalItems())
   const openCart = useCartStore((s) => s.openCart)
+  const openSearch = useSearchOverlayStore((s) => s.openSearch)
   const user = useAuthStore((s) => s.user)
   const { isStaff, role } = useAuth()
   const { data: categories } = useCategories()
@@ -44,8 +44,8 @@ export function Header() {
               isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
             )}
           >
-            {/* Left: Mobile hamburger or Brand on mobile */}
-            <div className="flex items-center gap-3">
+            {/* Left: Brand Monogram Logo & Mobile Hamburger */}
+            <div className="flex items-center gap-3 sm:gap-5">
               <button
                 className="btn-icon btn-ghost md:hidden -ml-2"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -55,21 +55,26 @@ export function Header() {
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
 
-              {/* Brand Logo */}
               <Link
                 to="/"
-                className="flex items-center focus-visible:outline-none"
-                aria-label="AK QIMAASH Home"
+                className="flex items-center focus-visible:outline-none transition-all duration-300 hover:opacity-90 group"
+                aria-label="AK Home"
               >
-                <span className="font-editorial text-2xl sm:text-3xl tracking-tight text-brand-black uppercase font-medium">
-                  AK QIMAASH
-                </span>
+                <img
+                  src="/images/logo-monogram.png"
+                  alt="AK"
+                  className={cn(
+                    'w-auto object-contain transition-all duration-300 drop-shadow-xs group-hover:scale-[1.04]',
+                    isScrolled
+                      ? 'h-8 sm:h-9 md:h-10'
+                      : 'h-10 sm:h-12 md:h-13'
+                  )}
+                />
               </Link>
             </div>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">
-              <NavLink to="/shop">SHOP</NavLink>
+            {/* Center: Desktop Navigation Links (Serial Position Effect: Primacy on New In & Collections) */}
+            <nav className="hidden md:flex items-center justify-center gap-7 lg:gap-8 flex-1" aria-label="Main navigation">
               <NavLink to="/shop?sort=newest">NEW IN</NavLink>
               {categories && categories.length > 0 && (
                 <div className="relative group">
@@ -90,14 +95,15 @@ export function Header() {
                   </div>
                 </div>
               )}
+              <NavLink to="/shop">SHOP ALL</NavLink>
               <NavLink to="/pages/about">ABOUT</NavLink>
             </nav>
 
-            {/* Right Action Icons: Search, Account, Bag */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            {/* Right Column: Action Icons (Search, Wishlist, Account, Bag) */}
+            <div className="flex-1 flex items-center justify-end gap-1.5 sm:gap-3 lg:gap-4">
               {/* Search */}
               <button
-                onClick={() => setSearchOverlayOpen(true)}
+                onClick={openSearch}
                 className="flex items-center gap-1.5 p-2 text-text-primary hover:text-accent transition-colors"
                 aria-label="Search catalog"
               >
@@ -163,8 +169,18 @@ export function Header() {
 
         {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-surface-raised animate-fade-in">
-            <nav className="container-main py-6 space-y-1" aria-label="Mobile navigation">
+          <div className="md:hidden border-t border-border bg-surface-raised animate-fade-in shadow-xl">
+            <div className="pt-6 pb-4 flex flex-col items-center justify-center border-b border-border/40 bg-brand-sand/15">
+              <img
+                src="/images/logo-monogram.png"
+                alt="AK"
+                className="h-16 w-auto object-contain mb-1.5"
+              />
+              <span className="text-[9px] tracking-[0.25em] uppercase font-sans text-text-muted font-medium">
+                Elegance in Every Thread
+              </span>
+            </div>
+            <nav className="container-main py-5 space-y-1" aria-label="Mobile navigation">
               {isStaff && (
                 <div className="pb-3 mb-3 border-b border-border">
                   <Link
@@ -198,9 +214,6 @@ export function Header() {
           </div>
         )}
       </header>
-
-      {/* Luxury Search Overlay */}
-      <SearchOverlay isOpen={searchOverlayOpen} onClose={() => setSearchOverlayOpen(false)} />
     </>
   )
 }

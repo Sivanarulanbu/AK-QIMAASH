@@ -29,7 +29,7 @@ interface RequireRoleProps {
  * ```
  */
 export function RequireRole({ roles, requireMfa = false, fallback, children }: RequireRoleProps) {
-  const { isAuthenticated, isLoading, mfaVerified } = useAuth()
+  const { isAuthenticated, isLoading, mfaVerified, mfaEnrolled } = useAuth()
   const role = useAuthStore((s) => s.role)
   const location = useLocation()
 
@@ -58,8 +58,9 @@ export function RequireRole({ roles, requireMfa = false, fallback, children }: R
     return <AccessDenied requiredRoles={roles} currentRole={role} />
   }
 
-  // ── MFA check (opt-in enforcement) ──
-  if (requireMfa && !mfaVerified) {
+  // ── MFA check: enforce when requireMfa is set OR if enrolled admin/staff hasn't verified AAL2 ──
+  const shouldEnforceMfa = requireMfa || (mfaEnrolled && !mfaVerified)
+  if (shouldEnforceMfa && !mfaVerified) {
     return <Navigate to="/auth/mfa-challenge" state={{ from: location }} replace />
   }
 

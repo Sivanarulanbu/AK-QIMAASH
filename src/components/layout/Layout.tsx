@@ -4,6 +4,7 @@ import { Header } from './Header'
 import { Footer } from './Footer'
 import { MobileBottomNav } from './MobileNav'
 import { CartDrawer } from '@/components/cart/CartDrawer'
+import { SearchOverlay } from './SearchOverlay'
 
 export function StorefrontLayout() {
   return (
@@ -15,6 +16,7 @@ export function StorefrontLayout() {
       <Footer />
       <MobileBottomNav />
       <CartDrawer />
+      <SearchOverlay />
     </div>
   )
 }

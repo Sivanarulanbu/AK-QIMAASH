@@ -15,7 +15,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   const { isInWishlist, toggleProduct } = useWishlistStore()
-  const { addItem } = useCartStore()
+  const { addItem, openCart } = useCartStore()
   const { toast } = useToast()
   const [showQuickAdd, setShowQuickAdd] = useState(false)
 
@@ -68,14 +68,26 @@ export function ProductCard({ product, className }: ProductCardProps) {
       quantity: 1,
     })
 
+    setShowQuickAdd(false)
+    openCart()
     toast({
       title: 'Added to Bag',
       description: `${product.name} — Size ${variant.size || 'One Size'}`,
       variant: 'default',
     })
-
-    setShowQuickAdd(false)
   }
+
+  // Check if any variant has a discount (Von Restorff Effect)
+  const discountedVariant = product.variants.find(
+    (v) => v.compare_price_cents && v.compare_price_cents > v.price_cents
+  )
+  const discountPercent = discountedVariant
+    ? Math.round(
+        ((discountedVariant.compare_price_cents! - discountedVariant.price_cents) /
+          discountedVariant.compare_price_cents!) *
+          100
+      )
+    : 0
 
   return (
     <div
@@ -108,15 +120,20 @@ export function ProductCard({ product, className }: ProductCardProps) {
           {secondaryImg && secondaryImg !== primaryImg && (
             <img
               src={secondaryImg}
-              alt={`${product.name} alternate view`}
-              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-102 transition-all duration-700 ease-out"
+              alt={`${product.name} alternate angle`}
+              className="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out group-hover:scale-102"
               loading="lazy"
             />
           )}
         </Link>
 
-        {/* Minimalist Top Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+        {/* Minimalist Top Badges (Von Restorff Effect) */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none z-10">
+          {discountPercent > 0 && !isOutOfStock && (
+            <span className="text-[10px] uppercase font-sans font-semibold tracking-[0.15em] px-2 py-0.5 bg-accent text-white rounded-xs shadow-xs">
+              -{discountPercent}%
+            </span>
+          )}
           {isOutOfStock ? (
             <span className="text-[10px] uppercase font-sans font-medium tracking-[0.15em] px-2 py-0.5 bg-brand-charcoal text-white rounded-xs">
               Sold Out
@@ -132,12 +149,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
           ) : null}
         </div>
 
-        {/* Wishlist Button (Corner Heart) */}
+        {/* Wishlist Button (Corner Heart — Fitts's Law 40px hit area) */}
         <button
           onClick={handleWishlistToggle}
           className={cn(
-            'absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center',
-            'bg-white/80 hover:bg-white text-brand-black backdrop-blur-md transition-all duration-200 shadow-xs',
+            'absolute top-2.5 right-2.5 w-10 h-10 rounded-full flex items-center justify-center',
+            'bg-white/90 hover:bg-white text-brand-black backdrop-blur-md transition-all duration-200 shadow-xs cursor-pointer',
             'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
             isWishlisted && 'opacity-100 text-accent'
           )}
@@ -146,17 +163,17 @@ export function ProductCard({ product, className }: ProductCardProps) {
         >
           <Heart
             className={cn(
-              'h-3.5 w-3.5 stroke-[1.5] transition-colors',
+              'h-4 w-4 stroke-[1.5] transition-colors',
               isWishlisted ? 'fill-accent stroke-accent' : 'stroke-brand-black'
             )}
           />
         </button>
 
-        {/* Quick Add Slide-up Strip */}
+        {/* Quick Add Slide-up Strip (Fitts's Law touch target expansion) */}
         {!isOutOfStock && (
           <div
             className={cn(
-              'absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-md py-2.5 px-3 border-t border-border/60 transition-transform duration-300 ease-out flex items-center justify-center',
+              'absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-md py-3 px-3.5 border-t border-border/60 transition-transform duration-300 ease-out flex items-center justify-center',
               showQuickAdd ? 'translate-y-0' : 'translate-y-full group-hover:translate-y-0'
             )}
           >
@@ -164,22 +181,23 @@ export function ProductCard({ product, className }: ProductCardProps) {
               // Single one-size item
               <button
                 onClick={(e) => handleQuickAdd(e, activeVariants[0].id)}
-                className="w-full text-center text-xs font-sans uppercase tracking-widest font-medium text-brand-black hover:text-accent transition-colors py-1"
+                className="w-full text-center text-xs font-sans uppercase tracking-widest font-medium text-brand-black hover:text-accent transition-colors py-2 cursor-pointer"
               >
                 + Quick Add
               </button>
             ) : (
               // Multi-size selector strip
-              <div className="flex items-center gap-1.5 w-full justify-center">
-                <span className="text-[10px] uppercase font-sans text-text-muted tracking-wider mr-1 hidden sm:inline">
+              <div className="flex items-center gap-2 w-full justify-center flex-wrap">
+                <span className="text-[10px] uppercase font-sans text-text-muted tracking-wider mr-0.5 hidden sm:inline">
                   Add:
                 </span>
                 {activeVariants.map((v) => (
                   <button
                     key={v.id}
                     onClick={(e) => handleQuickAdd(e, v.id)}
-                    className="h-7 min-w-[28px] px-1.5 text-xs font-sans font-medium text-brand-black hover:bg-brand-black hover:text-white border border-border/80 rounded-xs transition-colors flex items-center justify-center"
-                    title={`Add size ${v.size}`}
+                    className="h-8 min-w-[34px] sm:h-9 sm:min-w-[38px] px-2.5 text-xs font-sans font-medium text-brand-black hover:bg-brand-black hover:text-white border border-border/80 rounded-xs transition-colors flex items-center justify-center cursor-pointer shadow-3xs active:scale-95"
+                    title={`Add size ${v.size || 'OS'}`}
+                    aria-label={`Add size ${v.size || 'OS'}`}
                   >
                     {v.size || 'OS'}
                   </button>
@@ -215,11 +233,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
           {/* Color swatches */}
           {colors.length > 1 && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {colors.slice(0, 4).map((color, idx) => (
                 <span
                   key={idx}
-                  className="w-2.5 h-2.5 rounded-full border border-border/80"
+                  className="w-3 h-3 rounded-full border border-border/80 shadow-3xs"
                   style={{
                     backgroundColor:
                       color.toLowerCase() === 'black' ? '#1c1c1c' :

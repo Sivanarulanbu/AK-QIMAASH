@@ -43,15 +43,57 @@ export function Drawer({
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  // Focus trap
+  // Focus trap & previously focused element restoration
   useEffect(() => {
-    if (isOpen && drawerRef.current) {
+    if (!isOpen) return
+
+    const previousActiveElement = document.activeElement as HTMLElement | null
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      if (e.key !== 'Tab' || !drawerRef.current) return
+
       const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       )
-      focusable[0]?.focus()
+      if (focusable.length === 0) return
+
+      const firstElement = focusable[0]
+      const lastElement = focusable[focusable.length - 1]
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        lastElement.focus()
+        e.preventDefault()
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        firstElement.focus()
+        e.preventDefault()
+      }
     }
-  }, [isOpen])
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    // Set initial focus
+    const focusTimer = setTimeout(() => {
+      if (drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        focusable[0]?.focus()
+      }
+    }, 50)
+
+    return () => {
+      clearTimeout(focusTimer)
+      document.removeEventListener('keydown', handleKeyDown)
+      if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+        previousActiveElement.focus()
+      }
+    }
+  }, [isOpen, onClose])
 
   return (
     <>
@@ -70,7 +112,7 @@ export function Drawer({
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label={title || 'Drawer'}
         className={cn(
           'fixed top-0 h-full bg-surface-raised shadow-xl z-modal flex flex-col',
           'transition-transform duration-300 ease-out-expo',
@@ -118,13 +160,56 @@ export function Modal({
   maxWidth = 'max-w-lg',
   className,
 }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!isOpen) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+
+    const previousActiveElement = document.activeElement as HTMLElement | null
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      if (e.key !== 'Tab' || !modalRef.current) return
+
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) return
+
+      const firstElement = focusable[0]
+      const lastElement = focusable[focusable.length - 1]
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        lastElement.focus()
+        e.preventDefault()
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        firstElement.focus()
+        e.preventDefault()
+      }
     }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    const focusTimer = setTimeout(() => {
+      if (modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        focusable[0]?.focus()
+      }
+    }, 50)
+
+    return () => {
+      clearTimeout(focusTimer)
+      document.removeEventListener('keydown', handleKeyDown)
+      if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+        previousActiveElement.focus()
+      }
+    }
   }, [isOpen, onClose])
 
   useEffect(() => {
@@ -145,9 +230,10 @@ export function Modal({
         onClick={onClose}
       >
         <div
+          ref={modalRef}
           role="dialog"
           aria-modal="true"
-          aria-label={title}
+          aria-label={title || 'Modal'}
           className={cn(
             'bg-surface-raised rounded-xl shadow-xl w-full z-modal relative animate-fade-up',
             maxWidth,

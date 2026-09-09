@@ -2,17 +2,19 @@ import { Link, useLocation } from 'react-router-dom'
 import { Home, ShoppingBag, Heart, Search } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useWishlistStore } from '@/store/wishlistStore'
+import { useSearchOverlayStore } from '@/store/searchOverlayStore'
 import { cn } from '@/utils'
 
 export function MobileBottomNav() {
   const location = useLocation()
   const totalItems = useCartStore((s) => s.totalItems())
   const openCart = useCartStore((s) => s.openCart)
+  const openSearch = useSearchOverlayStore((s) => s.openSearch)
+  const isSearchOpen = useSearchOverlayStore((s) => s.isOpen)
   const wishlistCount = useWishlistStore((s) => s.productIds.length)
 
   const isHome = location.pathname === '/'
   const isShop = location.pathname.startsWith('/shop')
-  const isSearch = location.pathname.startsWith('/search')
   const isWishlist = location.pathname.startsWith('/wishlist')
 
   return (
@@ -50,18 +52,17 @@ export function MobileBottomNav() {
         </Link>
 
         {/* Search */}
-        <Link
-          to="/search"
+        <button
+          onClick={openSearch}
           className={cn(
             'flex flex-col items-center justify-center gap-1 text-[10px] font-sans uppercase tracking-wider font-medium transition-colors',
-            isSearch ? 'text-brand-black' : 'text-text-muted hover:text-text-secondary'
+            isSearchOpen ? 'text-brand-black' : 'text-text-muted hover:text-text-secondary'
           )}
-          aria-label="Search"
-          aria-current={isSearch ? 'page' : undefined}
+          aria-label="Search catalog"
         >
           <Search className="h-4 w-4 stroke-[1.5]" />
           <span>Search</span>
-        </Link>
+        </button>
 
         {/* Wishlist */}
         <Link
