@@ -255,7 +255,7 @@
   }
 
   .editorial-subheading {
-    @apply text-xs uppercase tracking-[0.2em] text-text-muted font-sans font-medium;
+    @apply text-xs uppercase tracking-[0.2em] text-text-secondary font-sans font-medium;
   }
 
   /* ── Section ── */

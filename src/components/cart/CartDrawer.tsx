@@ -147,7 +147,7 @@ export function CartDrawer() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-text-secondary">
-                  <span>GST (9%) Included</span>
+                  <span>Singapore GST (9%)</span>
                   <span>{formatPrice(gst)}</span>
                 </div>
                 <div className="flex justify-between text-text-secondary">

@@ -56,7 +56,7 @@ export function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="login-email" className="block text-[11px] font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1">
+            <label htmlFor="login-email" className="block text-[11px] font-sans uppercase tracking-[0.15em] text-[#4A4641] font-medium mb-1.5">
               Email Address
             </label>
             <input
@@ -65,8 +65,7 @@ export function LoginPage() {
               autoComplete="email"
               {...register('email')}
               placeholder="client@example.com"
-              style={{ outline: 'none' }}
-              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-3.5 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus-visible:ring-1 focus-visible:ring-brand-black focus:outline-none rounded-xs px-3.5 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
             />
             {errors.email && (
               <p className="text-xs text-error mt-1 font-sans">{errors.email.message}</p>
@@ -75,10 +74,10 @@ export function LoginPage() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="login-password" className="text-[11px] font-sans uppercase tracking-[0.15em] text-brand-stone font-medium">
+              <label htmlFor="login-password" className="text-[11px] font-sans uppercase tracking-[0.15em] text-[#4A4641] font-medium">
                 Password
               </label>
-              <Link to="/auth/forgot-password" className="text-xs font-sans text-brand-stone hover:text-brand-black underline underline-offset-4 py-0.5">
+              <Link to="/auth/forgot-password" className="text-xs font-sans text-[#4A4641] hover:text-brand-black underline underline-offset-4 py-0.5">
                 Forgot password?
               </Link>
             </div>
@@ -89,8 +88,7 @@ export function LoginPage() {
                 autoComplete="current-password"
                 {...register('password')}
                 placeholder="••••••••"
-                style={{ outline: 'none' }}
-                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-3.5 pr-10 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus-visible:ring-1 focus-visible:ring-brand-black focus:outline-none rounded-xs px-3.5 pr-10 py-2.5 sm:py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
               />
               <button
                 type="button"
@@ -207,7 +205,7 @@ export function RegisterPage() {
           )}
 
           <div>
-            <label htmlFor="reg-name" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+            <label htmlFor="reg-name" className="block text-xs font-sans uppercase tracking-[0.15em] text-[#4A4641] font-medium mb-1.5">
               Full Name
             </label>
             <input
@@ -216,8 +214,7 @@ export function RegisterPage() {
               autoComplete="name"
               {...register('full_name')}
               placeholder="e.g. Eleanor Vance"
-              style={{ outline: 'none' }}
-              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus-visible:ring-1 focus-visible:ring-brand-black focus:outline-none rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
             />
             {errors.full_name && (
               <p className="text-xs text-error mt-1 font-sans">{errors.full_name.message}</p>
@@ -225,7 +222,7 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="reg-email" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+            <label htmlFor="reg-email" className="block text-xs font-sans uppercase tracking-[0.15em] text-[#4A4641] font-medium mb-1.5">
               Email Address
             </label>
             <input
@@ -234,8 +231,7 @@ export function RegisterPage() {
               autoComplete="email"
               {...register('email')}
               placeholder="client@example.com"
-              style={{ outline: 'none' }}
-              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+              className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus-visible:ring-1 focus-visible:ring-brand-black focus:outline-none rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
             />
             {errors.email && (
               <p className="text-xs text-error mt-1 font-sans">{errors.email.message}</p>
@@ -243,7 +239,7 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="reg-password" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+            <label htmlFor="reg-password" className="block text-xs font-sans uppercase tracking-[0.15em] text-[#4A4641] font-medium mb-1.5">
               Password
             </label>
             <div className="relative">
@@ -253,8 +249,7 @@ export function RegisterPage() {
                 autoComplete="new-password"
                 {...register('password')}
                 placeholder="Min. 8 characters"
-                style={{ outline: 'none' }}
-                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 pr-11 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus-visible:ring-1 focus-visible:ring-brand-black focus:outline-none rounded-xs px-4 pr-11 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
               />
               <button
                 type="button"
@@ -369,7 +364,7 @@ export function ForgotPasswordPage() {
               </div>
             )}
             <div>
-              <label htmlFor="reset-email" className="block text-xs font-sans uppercase tracking-[0.15em] text-brand-stone font-medium mb-1.5">
+              <label htmlFor="reset-email" className="block text-xs font-sans uppercase tracking-[0.15em] text-[#4A4641] font-medium mb-1.5">
                 Email Address
               </label>
               <input
@@ -378,8 +373,7 @@ export function ForgotPasswordPage() {
                 autoComplete="email"
                 {...register('email', { required: 'Email is required' })}
                 placeholder="client@example.com"
-                style={{ outline: 'none' }}
-                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus:outline-none focus:ring-0 rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
+                className="w-full bg-[#FAF9F7]/80 border border-border focus:border-brand-black focus-visible:ring-1 focus-visible:ring-brand-black focus:outline-none rounded-xs px-4 py-3 text-sm font-sans text-brand-black placeholder:text-text-muted/60 transition-colors"
               />
               {errors.email && (
                 <p className="text-xs text-error mt-1 font-sans">{errors.email.message}</p>

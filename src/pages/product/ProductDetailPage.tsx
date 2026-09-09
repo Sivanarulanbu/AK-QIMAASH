@@ -269,7 +269,7 @@ export function ProductDetailPage() {
                   </span>
                 </>
               )}
-              <span className="text-xs font-sans text-text-muted">Includes 9% Singapore GST</span>
+              <span className="text-xs font-sans text-text-muted">+ 9% Singapore GST at checkout</span>
             </div>
 
             {/* Short editorial description */}
@@ -288,7 +288,7 @@ export function ProductDetailPage() {
                 <button
                   type="button"
                   onClick={() => setSizeGuideOpen(true)}
-                  className="text-xs font-sans text-text-muted hover:text-brand-black underline underline-offset-4"
+                  className="text-xs font-sans text-text-muted hover:text-brand-black underline underline-offset-4 cursor-pointer"
                 >
                   Size Guide
                 </button>
@@ -298,6 +298,7 @@ export function ProductDetailPage() {
                 variants={product.variants}
                 selectedVariantId={selectedVariant?.id ?? null}
                 onSelect={setSelectedVariant}
+                onOpenSizeGuide={() => setSizeGuideOpen(true)}
               />
 
               {/* Stock status indicator — tightly grouped with selected variant */}
@@ -580,19 +581,23 @@ export function ProductDetailPage() {
                 <label className="block text-xs uppercase font-sans font-medium text-text-muted tracking-wider mb-1.5">
                   Rating
                 </label>
-                <div className="flex gap-1.5">
+                <div className="flex gap-1.5" role="radiogroup" aria-label="Rating selection">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
                       onClick={() => setNewRating(star)}
-                      className="p-1 hover:scale-110 transition-transform"
+                      aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                      aria-checked={star === newRating}
+                      role="radio"
+                      className="p-1 hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black rounded-xs cursor-pointer"
                     >
                       <Star
                         className={cn(
                           'h-5 w-5',
                           star <= newRating ? 'fill-amber-500 stroke-amber-500' : 'stroke-border-strong text-transparent'
                         )}
+                        aria-hidden="true"
                       />
                     </button>
                   ))}

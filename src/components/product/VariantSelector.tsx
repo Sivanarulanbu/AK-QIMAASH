@@ -7,6 +7,7 @@ interface VariantSelectorProps {
   variants: Variant[]
   selectedVariantId: string | null
   onSelect: (variant: Variant) => void
+  onOpenSizeGuide?: () => void
 }
 
 /** Get unique sizes from variants */
@@ -34,6 +35,7 @@ export function VariantSelector({
   variants,
   selectedVariantId,
   onSelect,
+  onOpenSizeGuide,
 }: VariantSelectorProps) {
   const selectedVariant = variants.find((v) => v.id === selectedVariantId)
   const sizes = getUniqueSizes(variants)
@@ -135,9 +137,15 @@ export function VariantSelector({
         <div>
           <div className="flex items-baseline justify-between mb-3">
             <span className="text-sm font-medium text-text-primary">Size</span>
-            <button className="text-xs text-text-muted hover:text-text-primary underline underline-offset-2">
-              Size guide
-            </button>
+            {onOpenSizeGuide && (
+              <button
+                type="button"
+                onClick={onOpenSizeGuide}
+                className="text-xs text-text-muted hover:text-text-primary underline underline-offset-2 cursor-pointer"
+              >
+                Size guide
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Select size">
             {sizes.map((size) => {
