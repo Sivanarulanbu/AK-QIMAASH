@@ -26,18 +26,45 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Automatically close mobile menu when navigating to another route or search query
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname, location.search])
+
+  // Prevent background scrolling while mobile nav is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [mobileMenuOpen])
+
+  // Close mobile nav on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileMenuOpen])
+
   return (
     <>
       <header
         className={cn(
-          'sticky top-0 z-sticky transition-all duration-300',
+          'sticky top-0 transition-all duration-300',
+          mobileMenuOpen ? 'z-modal' : 'z-sticky',
           isScrolled
             ? 'bg-white/95 backdrop-blur-md border-b border-border/80 shadow-xs'
             : 'bg-white border-b border-border/40'
         )}
       >
         {/* Main Navigation Bar */}
-        <div className="container-main">
+        <div className="container-main relative z-20 bg-white">
           <div
             className={cn(
               'flex items-center justify-between transition-all duration-300',
@@ -167,51 +194,60 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile menu dropdown */}
+        {/* Mobile menu dropdown & full backdrop */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-surface-raised animate-fade-in shadow-xl">
-            <div className="pt-6 pb-4 flex flex-col items-center justify-center border-b border-border/40 bg-brand-sand/15">
-              <img
-                src="/images/logo-monogram.png"
-                alt="AK"
-                className="h-16 w-auto object-contain mb-1.5"
-              />
-              <span className="text-[9px] tracking-[0.25em] uppercase font-sans text-text-muted font-medium">
-                Elegance in Every Thread
-              </span>
-            </div>
-            <nav className="container-main py-5 space-y-1" aria-label="Mobile navigation">
-              {isStaff && (
-                <div className="pb-3 mb-3 border-b border-border">
-                  <Link
-                    to="/admin"
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs z-10 md:hidden animate-fade-in cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Dropdown Container */}
+            <div className="relative z-20 md:hidden border-t border-border bg-surface-raised animate-fade-in shadow-2xl max-h-[calc(100vh-64px)] overflow-y-auto">
+              <div className="pt-6 pb-4 flex flex-col items-center justify-center border-b border-border/40 bg-brand-sand/15">
+                <img
+                  src="/images/logo-monogram.png"
+                  alt="AK"
+                  className="h-16 w-auto object-contain mb-1.5"
+                />
+                <span className="text-[9px] tracking-[0.25em] uppercase font-sans text-text-muted font-medium">
+                  Elegance in Every Thread
+                </span>
+              </div>
+              <nav className="container-main py-5 space-y-1" aria-label="Mobile navigation">
+                {isStaff && (
+                  <div className="pb-3 mb-3 border-b border-border">
+                    <Link
+                      to="/admin"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-purple-700 font-semibold flex items-center gap-2 bg-purple-500/10 rounded-md p-3 text-xs uppercase tracking-wider"
+                    >
+                      <ShieldCheck className="h-4 w-4 text-purple-600" />
+                      Admin Portal ({role})
+                    </Link>
+                  </div>
+                )}
+                <MobileNavLink to="/shop" onClick={() => setMobileMenuOpen(false)}>Shop All</MobileNavLink>
+                <MobileNavLink to="/shop?sort=newest" onClick={() => setMobileMenuOpen(false)}>New In</MobileNavLink>
+                {categories?.map((cat) => (
+                  <MobileNavLink
+                    key={cat.id}
+                    to={`/shop?category=${cat.slug}`}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-purple-700 font-semibold flex items-center gap-2 bg-purple-500/10 rounded-md p-3 text-xs uppercase tracking-wider"
                   >
-                    <ShieldCheck className="h-4 w-4 text-purple-600" />
-                    Admin Portal ({role})
-                  </Link>
-                </div>
-              )}
-              <MobileNavLink to="/shop" onClick={() => setMobileMenuOpen(false)}>Shop All</MobileNavLink>
-              <MobileNavLink to="/shop?sort=newest" onClick={() => setMobileMenuOpen(false)}>New In</MobileNavLink>
-              {categories?.map((cat) => (
-                <MobileNavLink
-                  key={cat.id}
-                  to={`/shop?category=${cat.slug}`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {cat.name}
+                    {cat.name}
+                  </MobileNavLink>
+                ))}
+                <MobileNavLink to="/pages/about" onClick={() => setMobileMenuOpen(false)}>About AK QIMAASH</MobileNavLink>
+                <div className="divider my-3" />
+                <MobileNavLink to="/wishlist" onClick={() => setMobileMenuOpen(false)}>Wishlist</MobileNavLink>
+                <MobileNavLink to={user ? '/account' : '/auth/login'} onClick={() => setMobileMenuOpen(false)}>
+                  {user ? 'My Account' : 'Sign In'}
                 </MobileNavLink>
-              ))}
-              <MobileNavLink to="/pages/about" onClick={() => setMobileMenuOpen(false)}>About AK QIMAASH</MobileNavLink>
-              <div className="divider my-3" />
-              <MobileNavLink to="/wishlist" onClick={() => setMobileMenuOpen(false)}>Wishlist</MobileNavLink>
-              <MobileNavLink to={user ? '/account' : '/auth/login'} onClick={() => setMobileMenuOpen(false)}>
-                {user ? 'My Account' : 'Sign In'}
-              </MobileNavLink>
-            </nav>
-          </div>
+              </nav>
+            </div>
+          </>
         )}
       </header>
     </>

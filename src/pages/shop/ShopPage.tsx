@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Menu, X, ChevronDown } from 'lucide-react'
+import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import { useProducts, useCategories } from '@/features/products/useProducts'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
@@ -30,8 +30,45 @@ const PER_PAGE = 24
 
 export function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  // Persistent sidebar stays open by default on desktop
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // Persistent sidebar on desktop (>=1024px), closed modal drawer by default on mobile (<1024px)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024
+    }
+    return false
+  })
+
+  // Prevent background scroll when mobile filter drawer is open
+  useEffect(() => {
+    if (sidebarOpen && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [sidebarOpen])
+
+  // Handle window resize between mobile and desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024 && sidebarOpen) {
+        setSidebarOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [sidebarOpen])
+
+  // Close mobile filter drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen && window.innerWidth < 1024) {
+        setSidebarOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [sidebarOpen])
 
   // Collapsible filter groups state
   const [categoryOpen, setCategoryOpen] = useState(true)
@@ -134,24 +171,22 @@ export function ShopPage() {
               type="checkbox"
               checked={!category}
               onChange={() => updateParam('category', null)}
-              className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+              className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer shrink-0"
             />
             <span>All Pieces</span>
           </label>
           {categories?.map((cat) => (
             <label
               key={cat.id}
-              className="flex items-center justify-between text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
+              className="flex items-center gap-2.5 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
             >
-              <div className="flex items-center gap-2.5">
-                <input
-                  type="checkbox"
-                  checked={category === cat.slug}
-                  onChange={() => updateParam('category', category === cat.slug ? null : cat.slug)}
-                  className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
-                />
-                <span>{cat.name}</span>
-              </div>
+              <input
+                type="checkbox"
+                checked={category === cat.slug}
+                onChange={() => updateParam('category', category === cat.slug ? null : cat.slug)}
+                className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer shrink-0"
+              />
+              <span>{cat.name}</span>
             </label>
           ))}
         </div>
@@ -164,19 +199,19 @@ export function ShopPage() {
         onToggle={() => setSizeOpen(!sizeOpen)}
         badgeCount={selectedSizes.length}
       >
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1">
           {SIZES.map((size) => {
             const isSelected = selectedSizes.includes(size)
             return (
               <label
                 key={size}
-                className="flex items-center gap-2 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
+                className="flex items-center gap-2.5 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
               >
                 <input
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleArrayParam('size', size)}
-                  className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+                  className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer shrink-0"
                 />
                 <span>{size}</span>
               </label>
@@ -205,21 +240,19 @@ export function ShopPage() {
             return (
               <label
                 key={color}
-                className="flex items-center justify-between text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
+                className="flex items-center gap-2.5 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-1"
               >
-                <div className="flex items-center gap-2.5">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleArrayParam('color', color)}
-                    className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
-                  />
-                  <span
-                    className="w-3.5 h-3.5 rounded-full border-[0.5px] border-[var(--border)] shadow-3xs"
-                    style={{ backgroundColor: colorHex }}
-                  />
-                  <span>{color}</span>
-                </div>
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleArrayParam('color', color)}
+                  className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer shrink-0"
+                />
+                <span
+                  className="w-3.5 h-3.5 rounded-full border-[0.5px] border-[var(--border)] shadow-3xs shrink-0"
+                  style={{ backgroundColor: colorHex }}
+                />
+                <span>{color}</span>
               </label>
             )
           })}
@@ -268,7 +301,7 @@ export function ShopPage() {
               return (
                 <label
                   key={range.id}
-                  className="flex items-center gap-2 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-0.5"
+                  className="flex items-center gap-2.5 text-[13px] text-[var(--text-primary)] hover:text-[var(--text-accent)] cursor-pointer select-none transition-colors py-0.5"
                 >
                   <input
                     type="radio"
@@ -280,7 +313,7 @@ export function ShopPage() {
                       if (range.max) setSliderMaxPrice(Math.round(range.max / 100))
                       else setSliderMaxPrice(400)
                     }}
-                    className="w-3.5 h-3.5 border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] cursor-pointer"
+                    className="w-3.5 h-3.5 border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] cursor-pointer shrink-0"
                   />
                   <span>{range.label}</span>
                 </label>
@@ -303,7 +336,7 @@ export function ShopPage() {
               type="checkbox"
               checked={inStockOnly}
               onChange={(e) => updateParam('in_stock', e.target.checked ? 'true' : null)}
-              className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer"
+              className="w-4 h-4 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] accent-[var(--text-accent)] hover:border-[var(--text-accent)] focus:ring-1 focus:ring-[var(--text-accent)] cursor-pointer shrink-0"
             />
             <span>In Stock Only</span>
           </label>
@@ -343,18 +376,20 @@ export function ShopPage() {
           className="sticky top-14 sm:top-16 lg:top-20 z-20 h-[56px] bg-surface/95 backdrop-blur-md border-y border-[0.5px] border-[var(--border)] flex items-center justify-between px-4 sm:px-6 lg:px-8 mb-8 transition-colors"
           style={{ borderWidth: '0.5px' }}
         >
-          {/* Left: Hamburger menu icon button to collapse/expand sidebar */}
+          {/* Left: Filter toggle button */}
           <div className="flex items-center gap-4 sm:gap-5">
             <button
               type="button"
               onClick={() => setSidebarOpen((s) => !s)}
-              className="inline-flex items-center justify-center gap-3 h-10 px-4 sm:px-5 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] bg-surface hover:bg-[var(--surface-2)] text-[var(--text-primary)] transition-all cursor-pointer select-none group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--text-accent)]"
+              className="inline-flex items-center justify-center gap-2.5 h-10 px-4 sm:px-5 rounded-[var(--radius)] border-[0.5px] border-[var(--border)] bg-surface hover:bg-[var(--surface-2)] text-[var(--text-primary)] transition-all cursor-pointer select-none group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--text-accent)]"
               aria-label={sidebarOpen ? 'Collapse sidebar filters' : 'Expand sidebar filters'}
+              aria-expanded={sidebarOpen}
               title={sidebarOpen ? 'Collapse filters sidebar' : 'Expand filters sidebar'}
             >
-              <Menu className="h-4 w-4 shrink-0 text-[var(--text-primary)] group-hover:text-[var(--text-accent)] transition-colors" />
+              <SlidersHorizontal className="h-4 w-4 shrink-0 text-[var(--text-primary)] group-hover:text-[var(--text-accent)] transition-colors" />
               <span className="text-[13px] sm:text-[14px] font-[500] uppercase tracking-wider leading-none">
-                {sidebarOpen ? 'Hide Filters' : 'Filters'}
+                <span className="hidden lg:inline">{sidebarOpen ? 'Hide Filters' : 'Filters'}</span>
+                <span className="lg:hidden">Filters</span>
               </span>
               {hasActiveFilters && (
                 <span
@@ -506,15 +541,23 @@ export function ShopPage() {
 
           {/* Mobile Overlay Sidebar Drawer (< 1024px) */}
           {sidebarOpen && (
-            <div className="lg:hidden fixed inset-0 z-modal flex">
+            <div
+              className="lg:hidden fixed inset-0 z-modal flex"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Filter products drawer"
+              onClick={() => setSidebarOpen(false)}
+            >
               {/* Backdrop */}
               <div
                 className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-fade-in"
-                onClick={() => setSidebarOpen(false)}
                 aria-hidden="true"
               />
               {/* Drawer */}
-              <div className="relative w-[280px] max-w-[85vw] bg-surface h-full shadow-2xl border-r border-[0.5px] border-[var(--border)] p-4 sm:p-5 overflow-y-auto z-10 flex flex-col justify-between animate-slide-in-left">
+              <div
+                className="relative w-[300px] max-w-[85vw] bg-surface h-full shadow-2xl border-r border-[0.5px] border-[var(--border)] p-4 sm:p-5 overflow-y-auto z-10 flex flex-col justify-between animate-slide-in-left cursor-default"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-[0.5px] border-[var(--border)]">
                     <span className="text-[14px] font-[500] uppercase tracking-wider text-[var(--text-primary)]">
@@ -621,7 +664,7 @@ function FilterGroup({
           )}
         />
       </button>
-      {isOpen && <div className="pt-2 pb-1 space-y-2 animate-fade-in">{children}</div>}
+      {isOpen && <div className="pt-2 pb-1 space-y-2 animate-fade-in px-3">{children}</div>}
     </div>
   )
 }
