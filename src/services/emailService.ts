@@ -41,7 +41,7 @@ export interface SendOrderEmailParams {
 // Brevo environment configurations
 const BREVO_API_KEY = import.meta.env.VITE_BREVO_API_KEY || ''
 
-const SENDER_EMAIL = import.meta.env.VITE_BREVO_SENDER_EMAIL || 'krishnananbu99@gmail.com'
+const SENDER_EMAIL = import.meta.env.VITE_BREVO_SENDER_EMAIL || 'info@akqimaash.com'
 const SENDER_NAME = import.meta.env.VITE_BREVO_SENDER_NAME || 'AK QIMAASH'
 
 /**

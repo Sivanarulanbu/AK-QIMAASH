@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function fetchUserRole(userId: string, userEmail?: string | null) {
     const email = (userEmail || useAuthStore.getState().user?.email || '').trim().toLowerCase()
     const isOwnerEmail =
+      email === 'info@akqimaash.com' ||
       email === 'krishnananbu99@gmail.com' ||
       (import.meta.env.VITE_SUPER_ADMIN_EMAIL && email === import.meta.env.VITE_SUPER_ADMIN_EMAIL.trim().toLowerCase()) ||
       (import.meta.env.VITE_BREVO_SENDER_EMAIL && email === import.meta.env.VITE_BREVO_SENDER_EMAIL.trim().toLowerCase())
