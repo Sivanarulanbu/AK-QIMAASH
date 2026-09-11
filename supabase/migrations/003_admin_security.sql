@@ -38,6 +38,9 @@ $$;
 -- Split into granular policies.
 
 DROP POLICY IF EXISTS "categories_admin_write" ON public.categories;
+DROP POLICY IF EXISTS "categories_insert" ON public.categories;
+DROP POLICY IF EXISTS "categories_update" ON public.categories;
+DROP POLICY IF EXISTS "categories_delete" ON public.categories;
 
 -- CONTENT_MANAGER + ADMIN can insert
 CREATE POLICY "categories_insert" ON public.categories FOR INSERT
@@ -54,6 +57,9 @@ CREATE POLICY "categories_delete" ON public.categories FOR DELETE
 -- ─── 4. TIGHTEN RLS: PRODUCTS ───────────────────────────────────────────────
 
 DROP POLICY IF EXISTS "products_admin_write" ON public.products;
+DROP POLICY IF EXISTS "products_insert" ON public.products;
+DROP POLICY IF EXISTS "products_update" ON public.products;
+DROP POLICY IF EXISTS "products_delete" ON public.products;
 
 CREATE POLICY "products_insert" ON public.products FOR INSERT
   WITH CHECK (has_role(auth.uid(), 'CONTENT_MANAGER'));
@@ -67,6 +73,9 @@ CREATE POLICY "products_delete" ON public.products FOR DELETE
 -- ─── 5. TIGHTEN RLS: PRODUCT VARIANTS ───────────────────────────────────────
 
 DROP POLICY IF EXISTS "variants_admin_write" ON public.product_variants;
+DROP POLICY IF EXISTS "variants_insert" ON public.product_variants;
+DROP POLICY IF EXISTS "variants_update" ON public.product_variants;
+DROP POLICY IF EXISTS "variants_delete" ON public.product_variants;
 
 CREATE POLICY "variants_insert" ON public.product_variants FOR INSERT
   WITH CHECK (has_role(auth.uid(), 'CONTENT_MANAGER'));
@@ -80,6 +89,9 @@ CREATE POLICY "variants_delete" ON public.product_variants FOR DELETE
 -- ─── 6. TIGHTEN RLS: PRODUCT IMAGES ─────────────────────────────────────────
 
 DROP POLICY IF EXISTS "images_admin_write" ON public.product_images;
+DROP POLICY IF EXISTS "images_insert" ON public.product_images;
+DROP POLICY IF EXISTS "images_update" ON public.product_images;
+DROP POLICY IF EXISTS "images_delete" ON public.product_images;
 
 CREATE POLICY "images_insert" ON public.product_images FOR INSERT
   WITH CHECK (has_role(auth.uid(), 'CONTENT_MANAGER'));
@@ -113,6 +125,7 @@ CREATE POLICY "user_roles_admin_delete" ON public.user_roles FOR DELETE
 
 -- Drop old restrictive read policy and create broader one for admin staff
 DROP POLICY IF EXISTS "profiles_own_read" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_read" ON public.profiles;
 CREATE POLICY "profiles_read" ON public.profiles FOR SELECT
   USING (
     auth.uid() = id
@@ -137,6 +150,7 @@ CREATE TRIGGER prevent_audit_update
 
 -- Expand who can insert audit logs (all admin roles can create entries)
 DROP POLICY IF EXISTS "audit_admin_insert" ON public.audit_logs;
+DROP POLICY IF EXISTS "audit_insert" ON public.audit_logs;
 CREATE POLICY "audit_insert" ON public.audit_logs FOR INSERT
   WITH CHECK (
     auth.uid() IS NOT NULL

@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Sparkles, Eye, EyeOff, MailCheck, Mail, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { loginSchema, registerSchema, type LoginFormData, type RegisterFormData } from '@/schemas'
 import { SEOHead } from '@/components/seo/SEOHead'
+import { OtpVerificationForm } from '@/components/auth/OtpVerificationForm'
 
 // ─── Login Page ───────────────────────────────────────────────────────────────
 
@@ -18,6 +19,11 @@ export function LoginPage() {
 
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  const [showOtpMode, setShowOtpMode] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
+
   const {
     register,
     handleSubmit,
@@ -28,16 +34,70 @@ export function LoginPage() {
 
   if (user) return <Navigate to={from} replace />
 
+  if (showOtpMode && unconfirmedEmail) {
+    return (
+      <>
+        <SEOHead title="Validate OTP Code — AK QIMAASH" description="Enter your 6-digit confirmation code." />
+        <AuthLayout
+          title="Account Validation"
+          subtitle="Enter the 6-digit confirmation code sent to your email to activate and sign in."
+        >
+          <OtpVerificationForm
+            email={unconfirmedEmail}
+            onSuccess={() => navigate(from, { replace: true })}
+            onCancel={() => setShowOtpMode(false)}
+          />
+        </AuthLayout>
+      </>
+    )
+  }
+
   const onSubmit = async (data: LoginFormData) => {
     setError(null)
+    setUnconfirmedEmail(null)
+    setResendSuccess(false)
+
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     })
     if (authError) {
-      setError('Invalid email or password. Please check your credentials and try again.')
+      console.error('[Login Error]', authError)
+      const msg = authError.message || ''
+      if (
+        msg.toLowerCase().includes('not confirmed') ||
+        (authError as any).code === 'email_not_confirmed'
+      ) {
+        setError('Your email address has not been confirmed yet. Please verify your account using the activation link in your email.')
+        setUnconfirmedEmail(data.email)
+      } else {
+        setError('Invalid email or password. Please check your credentials and try again.')
+      }
     } else {
       navigate(from, { replace: true })
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return
+    setResending(true)
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: unconfirmedEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (resendError) {
+        setError(resendError.message)
+      } else {
+        setResendSuccess(true)
+      }
+    } catch (e: any) {
+      setError(e.message || 'Failed to resend confirmation link.')
+    } finally {
+      setResending(false)
     }
   }
 
@@ -49,9 +109,82 @@ export function LoginPage() {
         subtitle="Welcome back to AK QIMAASH. Enter your credentials to manage orders, personal sizing, and curated wishlists."
       >
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5 sm:space-y-6">
+          {location.state?.fromRegistration && !error && (
+            <div className="p-4 bg-amber-50/90 border border-amber-200 rounded text-xs text-amber-900 font-sans leading-relaxed flex items-start gap-2.5">
+              <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-950 mb-0.5">Verification Link Sent</p>
+                <p className="text-amber-800">
+                  Please click the confirmation link sent to{' '}
+                  <strong className="font-mono text-amber-950">{location.state.registeredEmail || 'your email'}</strong>{' '}
+                  to activate your account before signing in.
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
-            <div role="alert" className="p-3 bg-error-light border border-error/20 rounded text-xs text-error-dark font-sans leading-relaxed">
-              {error}
+            <div role="alert" className="p-4 bg-amber-50/90 border border-amber-300/80 rounded text-xs text-amber-950 font-sans leading-relaxed space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-amber-950">{unconfirmedEmail ? 'Email Confirmation Required' : 'Authentication Notice'}</p>
+                  <p className="text-amber-800">{error}</p>
+                </div>
+              </div>
+
+              {unconfirmedEmail && (
+                <div className="pt-2 border-t border-amber-200/80 flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowOtpMode(true)}
+                      className="px-3 py-1.5 bg-brand-black text-white hover:bg-black text-[11px] font-sans uppercase tracking-wider font-semibold rounded-xs transition-colors cursor-pointer"
+                    >
+                      Enter 6-Digit OTP
+                    </button>
+
+                    {resendSuccess ? (
+                      <p className="text-emerald-700 font-medium flex items-center gap-1 text-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        Code resent!
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendConfirmation}
+                        disabled={resending}
+                        className="px-2.5 py-1.5 border border-amber-300 bg-white text-amber-950 hover:bg-[#FAF9F7] text-[11px] font-sans uppercase tracking-wider font-medium rounded-xs transition-colors cursor-pointer"
+                      >
+                        {resending ? 'Sending...' : 'Resend Code'}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-[11px]">
+                    {unconfirmedEmail.includes('@gmail.com') && (
+                      <a
+                        href="https://mail.google.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-amber-900 underline font-medium hover:text-black inline-flex items-center gap-1"
+                      >
+                        Open Gmail <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                    {(unconfirmedEmail.includes('@outlook.com') || unconfirmedEmail.includes('@hotmail.com')) && (
+                      <a
+                        href="https://outlook.live.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-amber-900 underline font-medium hover:text-black inline-flex items-center gap-1"
+                      >
+                        Open Outlook <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -137,6 +270,9 @@ export function RegisterPage() {
   const user = useAuthStore((s) => s.user)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
+  const [resending, setResending] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
@@ -152,6 +288,7 @@ export function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setError(null)
+    setRegisteredEmail(data.email)
     const { error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -162,10 +299,12 @@ export function RegisterPage() {
     })
 
     if (authError) {
-      if (authError.message.includes('already registered')) {
+      console.error('[Registration Error]', authError)
+      const msg = authError.message || ''
+      if (msg.toLowerCase().includes('already registered')) {
         setError('An account with this email already exists. Please sign in.')
       } else {
-        setError('Registration failed. Please try again.')
+        setError(msg || 'Registration failed. Please try again.')
       }
     } else {
       setSuccess(true)
@@ -174,18 +313,15 @@ export function RegisterPage() {
 
   if (success) {
     return (
-      <AuthLayout title="Private Access Requested" subtitle="We have dispatched a verification link to your email.">
-        <div className="text-center py-4">
-          <p className="text-xs sm:text-sm font-sans text-brand-stone mb-6 leading-relaxed">
-            Please check your inbox to activate your client privileges and begin browsing curated editions.
-          </p>
-          <Link
-            to="/auth/login"
-            className="inline-flex items-center justify-center px-8 py-3.5 bg-brand-black text-white text-xs uppercase tracking-[0.2em] font-sans font-medium hover:bg-brand-charcoal transition-colors rounded-xs"
-          >
-            Return to Sign In
-          </Link>
-        </div>
+      <AuthLayout
+        title="Activate Account"
+        subtitle="Enter the 6-digit confirmation code sent to your email to activate your client membership."
+      >
+        <OtpVerificationForm
+          email={registeredEmail}
+          onSuccess={() => navigate('/account', { replace: true })}
+          onCancel={() => setSuccess(false)}
+        />
       </AuthLayout>
     )
   }
@@ -331,7 +467,8 @@ export function ForgotPasswordPage() {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     })
     if (e) {
-      setError('Failed to send reset link. Please try again.')
+      console.error('[Password Reset Error]', e)
+      setError(e.message || 'Failed to send reset link. Please try again.')
     } else {
       setSent(true)
     }

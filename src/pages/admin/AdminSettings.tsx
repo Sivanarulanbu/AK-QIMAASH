@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Mail, Copy, Check, ExternalLink, ShieldCheck, HelpCircle } from 'lucide-react'
 
-// Supabase project ID from env: ysabisrtgnmtiuioljpw
-const SUPABASE_PROJECT_ID = 'ysabisrtgnmtiuioljpw'
+// Supabase project ID derived dynamically from env
+const SUPABASE_PROJECT_ID =
+  import.meta.env.VITE_SUPABASE_URL?.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || 'gfodfostfihtvkkezfoq'
 const SUPABASE_EMAIL_TEMPLATES_URL = `https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/auth/templates`
 const SUPABASE_SECRETS_URL = `https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/settings/functions`
 

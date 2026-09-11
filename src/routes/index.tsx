@@ -4,6 +4,8 @@ import { StorefrontLayout } from '@/components/layout/Layout'
 import { AdminLayout } from '@/pages/admin/AdminLayout'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { LoginPage, RegisterPage, ForgotPasswordPage } from '@/pages/auth/AuthPages'
+import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { AccountLayout, AccountProfilePage } from '@/pages/account/AccountPages'
 import { OrdersPage, OrderDetailPage } from '@/pages/order/OrderPages'
 
@@ -119,6 +121,8 @@ export const router = createBrowserRouter([
       { path: 'auth/login', element: <LoginPage /> },
       { path: 'auth/register', element: <RegisterPage /> },
       { path: 'auth/forgot-password', element: <ForgotPasswordPage /> },
+      { path: 'auth/reset-password', element: <ResetPasswordPage /> },
+      { path: 'auth/callback', element: <AuthCallbackPage /> },
       { path: 'auth/mfa-setup', element: <S><MfaSetupPage /></S> },
       { path: 'auth/mfa-challenge', element: <S><MfaChallengePage /></S> },
 
