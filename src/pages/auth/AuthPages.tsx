@@ -268,11 +268,10 @@ export function LoginPage() {
 
 export function RegisterPage() {
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
-  const [resending, setResending] = useState(false)
-  const [resendSuccess, setResendSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
